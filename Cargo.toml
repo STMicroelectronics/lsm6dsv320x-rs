@@ -1,0 +1,27 @@
+[package]
+name = "lsm6dsv320x-rs"
+version = "1.0.0"
+edition = "2024"
+rust-version = "1.85.1"
+readme = "README.md"
+license = "BSD-3-Clause"
+categories = ["embedded", "no-std"]
+keywords = ["st", "mems", "imu", "mlc", "fsm"]
+repository = "https://github.com/STMicroelectronics/lsm6dsv320x-rs"
+description = """
+    Driver for the LSM6DSV320X IMU, featuring a low-g (±16g) and high-g (±320g) accelerometer,
+    gyroscope, and integrated FSM/MLC modules for AI and IoT applications.
+"""
+
+[dependencies]
+embedded-hal = "1.0.0"
+bitfield-struct = "0.11.0"
+half = { version = "2.6", default-features = false }
+st-mems-bus = "1.0.0"
+derive_more = { version = "2.0.1", default-features = false, features = ["try_from"] }
+st-mem-bank-macro = "1.0.0"
+
+# By default the bit order is assumed as Least Significant Bit.
+[features]
+default = []
+bit_order_msb = []
