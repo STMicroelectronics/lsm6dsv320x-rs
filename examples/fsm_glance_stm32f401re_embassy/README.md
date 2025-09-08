@@ -1,8 +1,8 @@
 # LSM6DSV320X Glance and Deglance Gesture Detection on STM32F401RE Nucleo-64
 
-This example demonstrates how to detect *glance* and *deglance* gestures using the **LSM6DSV320X** inertial measurement unit (IMU) sensor on an **STM32F401RE** Nucleo-64 board. The sensor's finite state machine (FSM) is configured via a UCF-generated register sequence to recognize these gestures, and detected events are output over UART.
+This example demonstrates how to detect *glance* and *deglance* gestures using the **LSM6DSV320X** inertial measurement unit (IMU) sensor on an **STM32F401RE** Nucleo-64 board. The sensor's finite state machine (FSM) is configured via a JSON-generated register sequence to recognize these gestures, and detected events are output over UART.
 
-The program uses the Embassy STM32 HAL for peripheral initialization and interrupt handling, and the `lsm6dsv320x` Rust driver crate for sensor communication. The sensor FSM configuration is embedded as Rust code generated from a UCF file, enabling flexible and maintainable sensor programming.
+The program uses the Embassy STM32 HAL for peripheral initialization and interrupt handling, and the `lsm6dsv320x` Rust driver crate for sensor communication. The sensor FSM configuration is embedded as Rust code generated from a JSON file, enabling flexible and maintainable sensor programming.
 
 ---
 
@@ -37,12 +37,12 @@ The LSM6DSV320X sensor is connected via I2C1 on PB8/PB9. The FSM event interrupt
 - PC0 is configured as an input pin with no pull resistor and set up as an external interrupt line (EXTI0).
 - A delay abstraction is created for timing operations.
 
-### Sensor Setup via UCF Configuration
+### Sensor Setup via JSON Configuration
 
 - The LSM6DSV320X sensor is initialized over I2C with the low I2C address.
 - The device ID is read and verified; if mismatched, an error message is sent over UART and the program halts.
 - The sensor is reset to default configuration and the program waits until reset completes.
-- The sensor is configured by applying a sequence of register writes and delays defined in the `lsm6dsv320x_glance_detection.ucf` array, which is generated from a UCF file. This programs the sensor's FSM to detect glance and deglance gestures.
+- The sensor is configured by applying a sequence of register writes and delays defined in the `lsm6dsv320x_glance_detection.ucf` array, which is generated from a JSON file. This programs the sensor's FSM to detect glance and deglance gestures.
 
 ### Main Loop
 
@@ -68,7 +68,7 @@ The LSM6DSV320X sensor is connected via I2C1 on PB8/PB9. The FSM event interrupt
 
 ## Notes
 
-- The sensor FSM configuration is applied via a UCF-generated register sequence (`GLANCE`), enabling flexible FSM programming.
+- The sensor FSM configuration is applied via a JSON-generated register sequence (`GLANCE`), enabling flexible FSM programming.
 - UART output uses blocking writes without DMA.
 - The example runs entirely within the Embassy async main task.
 - The environment is `#![no_std]` and `#![no_main]` for embedded Rust.
@@ -83,4 +83,4 @@ The LSM6DSV320X sensor is connected via I2C1 on PB8/PB9. The FSM event interrupt
 - [Embassy STM32 HAL](https://docs.rs/embassy-stm32)
 ---
 
-*This README explains the embedded Rust example for glance and deglance gesture detection on the LSM6DSV320X sensor using STM32F401RE and Embassy STM32 HAL, leveraging UCF-generated FSM configuration.*
+*This README explains the embedded Rust example for glance and deglance gesture detection on the LSM6DSV320X sensor using STM32F401RE and Embassy STM32 HAL, leveraging JSON-generated FSM configuration.*

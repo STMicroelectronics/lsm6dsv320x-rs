@@ -1,6 +1,6 @@
 # LSM6DSV320X FSM Event Detection on STM32F401RE Nucleo-64 (4-Directional Events)
 
-This example demonstrates how to configure and use the **LSM6DSV320X** inertial measurement unit (IMU) sensor on an **STM32F401RE Nucleo-64** board to detect 4-directional FSM (Finite State Machine) events: X/Y up and down. The sensor is configured via a UCF-generated register sequence, and detected events are output over UART.
+This example demonstrates how to configure and use the **LSM6DSV320X** inertial measurement unit (IMU) sensor on an **STM32F401RE Nucleo-64** board to detect 4-directional FSM (Finite State Machine) events: X/Y up and down. The sensor is configured via a JSON-generated register sequence, and detected events are output over UART.
 
 The program uses the Embassy STM32 HAL for peripheral initialization and interrupt handling, and the `lsm6dsv320x` Rust driver crate for sensor communication. The sensor FSM events trigger an external interrupt, which the program handles asynchronously to read and report the event.
 
@@ -44,7 +44,7 @@ The configuration runs at 30 Hz.
 - The LSM6DSV320X sensor is initialized over I2C with the low I2C address.
 - The device ID is read and verified; if mismatched, an error message is sent over UART and the program halts.
 - The sensor is reset to default configuration and the program waits until reset completes.
-- The sensor is configured by applying a sequence of register writes and delays defined in the `FOUR_D` array, which is generated from a UCF file. This programs the sensor's FSM to detect 4-directional events.
+- The sensor is configured by applying a sequence of register writes and delays defined in the `FOUR_D` array, which is generated from a JSON file. This programs the sensor's FSM to detect 4-directional events.
 
 ### Main Loop
 
@@ -72,7 +72,7 @@ The configuration runs at 30 Hz.
 
 ## Notes
 
-- The sensor FSM configuration is applied via a UCF-generated register sequence (`FOUR_D`), enabling flexible FSM programming.
+- The sensor FSM configuration is applied via a JSON-generated register sequence (`FOUR_D`), enabling flexible FSM programming.
 - UART output uses blocking writes without DMA.
 - The example runs entirely within the Embassy async main task.
 - Panic behavior is set to halt on panic using `defmt` and `panic_probe`.

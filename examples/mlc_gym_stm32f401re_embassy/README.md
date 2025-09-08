@@ -1,8 +1,8 @@
 # LSM6DSV320X Gym Right Arm Exercise Detection on STM32F401RE Nucleo-64
 
-This example demonstrates how to detect specific gym exercises—*biceps curl*, *lateral raises*, and *squats*—using the **LSM6DSV320X** inertial measurement unit (IMU) sensor on an **STM32F401RE** Nucleo-64 board. The sensor's machine learning core (MLC) is configured via a UCF-generated register sequence to recognize these exercises, and detected events are output over UART.
+This example demonstrates how to detect specific gym exercises—*biceps curl*, *lateral raises*, and *squats*—using the **LSM6DSV320X** inertial measurement unit (IMU) sensor on an **STM32F401RE** Nucleo-64 board. The sensor's machine learning core (MLC) is configured via a JSON-generated register sequence to recognize these exercises, and detected events are output over UART.
 
-The program interfaces with the sensor over I2C, configures the MLC using a UCF-generated configuration, and waits for MLC event interrupts to report recognized exercises.
+The program interfaces with the sensor over I2C, configures the MLC using a JSON-generated configuration, and waits for MLC event interrupts to report recognized exercises.
 
 ---
 
@@ -37,12 +37,12 @@ The LSM6DSV320X sensor is connected via I2C1 on PB8/PB9. The MLC event interrupt
 - PC0 is configured as an input pin with no pull resistor and set up as an external interrupt line (EXTI0).
 - A delay abstraction is created for timing operations.
 
-### Sensor Setup via UCF Configuration
+### Sensor Setup via JSON Configuration
 
 - The LSM6DSV320X sensor is initialized over I2C with the low I2C address.
 - The device ID is read and verified; if mismatched, an error message is sent over UART and the program halts.
 - The sensor is reset to default configuration and the program waits until reset completes.
-- The sensor is configured by applying a sequence of register writes and delays defined in the `GYM_RIGHT` array, which is generated from a UCF file. This programs the sensor's machine learning core (MLC) to detect gym exercises.
+- The sensor is configured by applying a sequence of register writes and delays defined in the `GYM_RIGHT` array, which is generated from a JSON file. This programs the sensor's machine learning core (MLC) to detect gym exercises.
 
 ### Event Detection Loop
 
@@ -60,7 +60,7 @@ The LSM6DSV320X sensor is connected via I2C1 on PB8/PB9. The MLC event interrupt
 
 1. Connect the LSM6DSV320X sensor to the STM32F401RE Nucleo board via I2C1 (PB8/PB9).
 2. Connect the sensor's MLC interrupt output to PC0 on the STM32F401RE.
-3. Build the project, which uses the **`ucf-tool`** to generate Rust configuration code from UCF files automatically at build time.
+3. Build the project, which uses the **`ucf-tool`** to generate Rust configuration code from JSON files automatically at build time.
 4. Flash the compiled Rust firmware onto the STM32F401RE.
 5. Open a serial terminal at 115200 baud on the UART port.
 6. Perform gym exercises corresponding to the configured gestures.
@@ -71,8 +71,8 @@ The LSM6DSV320X sensor is connected via I2C1 on PB8/PB9. The MLC event interrupt
 ## Notes
 
 - This example uses polling of interrupts and MLC event registers for exercise detection.
-- The **`ucf-tool`** enables flexible sensor MLC configuration by converting UCF files into Rust code.
-- The sensor driver and UCF-generated code handle low-level register access and MLC programming.
+- The **`ucf-tool`** enables flexible sensor MLC configuration by converting JSON files into Rust code.
+- The sensor driver and JSON-generated code handle low-level register access and MLC programming.
 - UART output uses blocking writes without DMA.
 - The environment is `#![no_std]` and `#![no_main]` for embedded Rust applications.
 - Panic behavior is set to halt on panic (`defmt` and `panic_probe`).
@@ -86,4 +86,4 @@ The LSM6DSV320X sensor is connected via I2C1 on PB8/PB9. The MLC event interrupt
 - [Embassy STM32 HAL](https://docs.rs/embassy-stm32)
 ---
 
-*This README provides a detailed explanation of the embedded Rust program for gym exercise detection on STM32F401RE using the LSM6DSV320X sensor and UCF-generated MLC configuration.*
+*This README provides a detailed explanation of the embedded Rust program for gym exercise detection on STM32F401RE using the LSM6DSV320X sensor and JSON-generated MLC configuration.*
