@@ -404,15 +404,14 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     /// Reset type choosen using `Reset` enum.
     pub fn reset_set(&mut self, val: Reset) -> Result<(), Error<B::Error>> {
         let mut func_cfg_access = FuncCfgAccess::read(self)?;
-        func_cfg_access.set_sw_por(val as u8 & 0x01);
-        func_cfg_access.write(self)?;
-
         let mut ctrl3 = Ctrl3::read(self)?;
-        ctrl3.set_boot(((val as u8) & 0x04) >> 2);
-        ctrl3.set_sw_reset(((val as u8) & 0x02) >> 1);
-        ctrl3.write(self)?;
 
-        Ok(())
+        ctrl3.set_boot(if val == Reset::RestoreCalParam { 1 } else { 0 });
+        ctrl3.set_sw_reset(if val == Reset::RestoreCtrlRegs { 1 } else { 0 });
+        func_cfg_access.set_sw_por(if val == Reset::GlobalRst { 1 } else { 0 });
+
+        ctrl3.write(self)?;
+        func_cfg_access.write(self)
     }
 
     pub fn reset_get(&mut self) -> Result<Reset, Error<B::Error>> {
