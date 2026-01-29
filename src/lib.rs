@@ -28,6 +28,7 @@ pub struct Lsm6dsv320x<B: BusOperation, T: DelayNs> {
 pub enum Error<B> {
     Bus(B),          // Error at the bus level
     UnexpectedValue, // Unexpected value read from a register
+    InvalidConfiguration,
     FailedToReadMemBank,
     FailedToSetMemBank(MemBank),
 }
@@ -2030,6 +2031,45 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     /// Get the configuration (enables/disables) gyroscope digital LPF1 filter.
     pub fn filt_gy_lp1_get(&mut self) -> Result<u8, Error<B::Error>> {
         Ctrl7::read(self).map(|ctrl7| ctrl7.lpf1_g_en())
+    }
+
+    /// Setup xl filter pipeline for lpf1 filter to UI
+    pub fn filt_xl_setup(
+        &mut self,
+        filter: XlFilter,
+        bw: FiltLpBandwidth,
+        hp_ref_mode_xl: u8,
+    ) -> Result<(), Error<B::Error>> {
+        if (filter == XlFilter::Hp && bw == FiltLpBandwidth::UltraLight)
+            || (hp_ref_mode_xl == 1 && filter != XlFilter::Hp)
+            || (filter == XlFilter::HpSlope && (bw as u8) != 0x0)
+        {
+            return Err(Error::InvalidConfiguration);
+        }
+
+        let mut ctrl8 = Ctrl8::read(self)?;
+        let mut ctrl9 = Ctrl9::read(self)?;
+
+        match filter {
+            XlFilter::Lpf2 => {
+                ctrl9.set_hp_slope_xl_en(0);
+                ctrl9.set_lpf2_xl_en(1);
+            }
+            XlFilter::Lpf1 => {
+                ctrl9.set_hp_slope_xl_en(0);
+                ctrl9.set_lpf2_xl_en(0);
+            }
+            XlFilter::Hp | XlFilter::HpSlope => {
+                ctrl9.set_hp_slope_xl_en(1);
+                ctrl9.set_lpf2_xl_en(0);
+            }
+        }
+
+        ctrl8.set_hp_lpf2_xl_bw(bw as u8);
+        ctrl9.set_hp_ref_mode_xl(hp_ref_mode_xl);
+
+        ctrl8.write(self)?;
+        ctrl9.write(self)
     }
 
     /// Set the Accelerometer LPF2 and high pass filter configuration and cutoff setting.

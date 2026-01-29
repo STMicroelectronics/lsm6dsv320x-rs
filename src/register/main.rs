@@ -2273,6 +2273,18 @@ pub enum XlFullScale {
     _16g = 0x3,
 }
 
+/// Setup filter pipeline from lpf1 filter to UI
+#[repr(u8)]
+#[derive(Clone, Copy, PartialEq, Default, TryFrom)]
+#[try_from(repr)]
+pub enum XlFilter {
+    #[default]
+    Lpf2,
+    Lpf1,
+    Hp,
+    HpSlope,
+}
+
 /// High-G accelerometer full-scale selection.
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Default, TryFrom)]
