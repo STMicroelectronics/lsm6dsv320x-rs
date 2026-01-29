@@ -40,7 +40,7 @@ pub enum If2Reg {
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct If2WhoAmI {
     /// Device ID (fixed 0x73).
-    #[bits(8)]
+    #[bits(8, default = 0x73)]
     pub id: u8,
 }
 

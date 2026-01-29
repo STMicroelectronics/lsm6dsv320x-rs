@@ -306,7 +306,7 @@ pub struct Tgt0Add {
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Tgt0Subadd {
     /// Register address on sensor 0.
-    #[bits(8)]
+    #[bits(8, default = 0x00)]
     pub target0_reg: u8,
 }
 
@@ -327,7 +327,7 @@ pub struct Tgt0Config {
     /// Reserved bit, must be 0.
     not_used0: u8,
     /// Rate at which the controller communicates (3 bits). Default: 100 (120 Hz).
-    #[bits(3)]
+    #[bits(3, default = 0b100)]
     pub shub_odr: u8,
 }
 
@@ -371,7 +371,7 @@ pub struct Tgt1Config {
     /// Enables FIFO data batching of second target. Default: 0 (disabled).
     #[bits(1)]
     pub batch_ext_sens_1_en: u8,
-    #[bits(4, access = RO)]
+    #[bits(4, access = RO, default = 0b0001)]
     /// Reserved bits, must be 0.
     not_used0: u8,
 }

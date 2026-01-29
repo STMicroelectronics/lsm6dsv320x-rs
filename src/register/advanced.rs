@@ -186,7 +186,7 @@ pub struct FsmExtMatrixXxL {
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixXxH {
-    #[bits(8)]
+    #[bits(8, default = 0x3C)]
     pub fsm_ext_mat_xx: u8,
 }
 
@@ -252,7 +252,7 @@ pub struct FsmExtMatrixYyL {
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixYyH {
-    #[bits(8)]
+    #[bits(8, default = 0x3C)]
     pub fsm_ext_mat_yy: u8,
 }
 
@@ -296,7 +296,7 @@ pub struct FsmExtMatrixZzL {
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixZzH {
-    #[bits(8)]
+    #[bits(8, default = 0x3C)]
     pub fsm_ext_mat_zz: u8,
 }
 
@@ -309,7 +309,7 @@ pub struct FsmExtMatrixZzH {
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct ExtCfgA {
     /// External sensor Z-axis rotation (3 bits).
-    #[bits(3)]
+    #[bits(3, default = 0b101)]
     pub ext_z_axis: u8,
     #[bits(1, access = RO)]
     /// Reserved bit, must be 0.
@@ -332,7 +332,7 @@ pub struct ExtCfgA {
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct ExtCfgB {
     /// External sensor X-axis rotation (3 bits).
-    #[bits(3)]
+    #[bits(3, default = 0b010)]
     pub ext_x_axis: u8,
     #[bits(5, access = RO)]
     /// Reserved bits, must be 0.
@@ -345,28 +345,11 @@ pub struct ExtCfgB {
 /// 16-bit half-precision floating-point format.
 /// Default: 0x051F (expressed in hundreds of g).
 #[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::XlHgSensitivityL, access_type = Lsm6dsv320x, generics = 2)]
-pub struct XlHgSensitivity(pub u16);
-
-/// XL_HG_SENSITIVITY_L (0x58)
-///
-/// Low byte of high-g accelerometer sensitivity (R).
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::XlHgSensitivityL, access_type = Lsm6dsv320x, generics = 2)]
-#[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
-#[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
-pub struct XlHgSensitivityL {
-    #[bits(8)]
-    pub xl_hg_s: u8,
-}
-
-/// XL_HG_SENSITIVITY_H (0x59)
-///
-/// High byte of high-g accelerometer sensitivity (R).
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::XlHgSensitivityH, access_type = Lsm6dsv320x, generics = 2)]
-#[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
-#[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
-pub struct XlHgSensitivityH {
-    #[bits(8)]
-    pub xl_hg_s: u8,
+#[cfg_attr(feature = "bit_order_msb", bitfield(u16, order = Msb))]
+#[cfg_attr(not(feature = "bit_order_msb"), bitfield(u16, order = Lsb))]
+pub struct XlHgSensitivity {
+    #[bits(16, default = 0x051F)]
+    pub xl_hg: u16,
 }
 
 /// FSM_LC_TIMEOUT (0x7A)
@@ -469,7 +452,7 @@ pub struct PedoCmdReg {
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct PedoDebStepsConf {
-    #[bits(8)]
+    #[bits(8, default = 0x0A)]
     pub deb_step: u8,
 }
 
@@ -508,28 +491,11 @@ pub struct PedoScDeltatH {
 /// 16-bit half-precision floating-point format.
 /// Default: 0x3C00 (1 gauss/LSB).
 #[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::MlcExtSensitivityL, access_type = Lsm6dsv320x, generics = 2)]
-pub struct MlcExtSensitivity(pub u16);
-
-/// MLC_EXT_SENSITIVITY_L (0xE8)
-///
-/// Low byte of external sensor sensitivity for MLC.
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::MlcExtSensitivityL, access_type = Lsm6dsv320x, generics = 2)]
-#[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
-#[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
-pub struct MlcExtSensitivityL {
-    #[bits(8)]
-    pub mlc_ext_s: u8,
-}
-
-/// MLC_EXT_SENSITIVITY_H (0xE9)
-///
-/// High byte of external sensor sensitivity for MLC.
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::MlcExtSensitivityH, access_type = Lsm6dsv320x, generics = 2)]
-#[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
-#[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
-pub struct MlcExtSensitivityH {
-    #[bits(8)]
-    pub mlc_ext_s: u8,
+#[cfg_attr(feature = "bit_order_msb", bitfield(u16, order = Msb))]
+#[cfg_attr(not(feature = "bit_order_msb"), bitfield(u16, order = Lsb))]
+pub struct MlcExtSensitivity {
+    #[bits(16, default = 0x3C00)]
+    pub mlc_ext: u16,
 }
 
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
@@ -563,7 +529,7 @@ pub struct Ext3byteSensitivityL {
 ///
 /// High byte of external sensor sensitivity for 3-byte output data (R/W).
 pub struct Ext3byteSensitivityH {
-    #[bits(8)]
+    #[bits(8, default = 0x0C)]
     pub ext_3byte_s: u8,
 }
 
@@ -583,7 +549,7 @@ pub struct Ext3byteOffsetXl {
 ///
 /// Middle byte of external sensor offset for 3-byte output data (R/W).
 pub struct Ext3byteOffsetL {
-    #[bits(8)]
+    #[bits(8, default = 0x54)]
     pub ext_3byte_off: u8,
 }
 
@@ -593,7 +559,7 @@ pub struct Ext3byteOffsetL {
 ///
 /// High byte of external sensor offset for 3-byte output data (R/W).
 pub struct Ext3byteOffsetH {
-    #[bits(8)]
+    #[bits(8, default = 0x3F)]
     pub ext_3byte_off: u8,
 }
 

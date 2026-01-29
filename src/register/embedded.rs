@@ -91,8 +91,8 @@ pub enum EmbReg {
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct PageSel {
-    #[bits(4, access = RO)]
-    /// Reserved, must be 0 for correct operation.
+    #[bits(4, access = RO, default = 0b0001)]
+    /// Reserved, must be 0001 for correct operation.
     not_used0: u8,
     #[bits(4)]
     /// Page selection bits. Default: 0000.
@@ -923,14 +923,14 @@ pub struct FsmOuts8 {
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SflpOdr {
-    /// Reserved bits, must be 0.
-    #[bits(3, access = RO)]
+    /// Reserved bits.
+    #[bits(3, access = RO, default = 0b011)]
     not_used0: u8,
     /// SFLP game algorithm ODR selection (3 bits). Default: 011 (120 Hz).
-    #[bits(3)]
+    #[bits(3, default = 0b011)]
     pub sflp_game_odr: u8,
-    /// Reserved bits, must be 0.
-    #[bits(2, access = RO)]
+    /// Reserved bits.
+    #[bits(2, access = RO, default = 0b01)]
     not_used1: u8,
 }
 
@@ -941,14 +941,14 @@ pub struct SflpOdr {
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmOdr {
-    /// Reserved bits, must be 0.
-    #[bits(3, access = RO)]
+    /// Reserved bits.
+    #[bits(3, access = RO, default = 0b011)]
     not_used0: u8,
     /// FSM ODR selection (3 bits). Default: 001 (30 Hz).
-    #[bits(3)]
+    #[bits(3, default = 0b001)]
     pub fsm_odr: u8,
     /// Reserved bits, must be 0.
-    #[bits(2, access = RO)]
+    #[bits(2, access = RO, default = 0b01)]
     not_used1: u8,
 }
 
@@ -960,13 +960,13 @@ pub struct FsmOdr {
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct MlcOdr {
     /// Reserved bits, must be 0.
-    #[bits(4, access = RO)]
+    #[bits(4, access = RO, default = 0b0101)]
     not_used0: u8,
     /// MLC ODR selection (3 bits). Default: 001 (30 Hz).
-    #[bits(3)]
+    #[bits(3, default = 0b001)]
     pub mlc_odr: u8,
     /// Reserved bits, must be 0.
-    #[bits(1, access = RO)]
+    #[bits(1, access = RO, default = 0)]
     not_used1: u8,
 }
 
@@ -1074,18 +1074,18 @@ pub struct EmbFuncInitB {
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct EmbFuncSensorConvEn {
     /// High-g accelerometer data conversion enable. Default: 1.
-    #[bits(1)]
+    #[bits(1, default = 1)]
     pub xl_hg_conv_en: u8,
     /// Gyroscope data conversion enable. Default: 1.
-    #[bits(1)]
+    #[bits(1, default = 1)]
     pub gyro_conv_en: u8,
     /// Temperature data conversion enable. Default: 1.
-    #[bits(1)]
+    #[bits(1, default = 1)]
     pub temp_conv_en: u8,
     /// External sensor data conversion enable. Default: 1.
-    #[bits(1)]
+    #[bits(1, default = 1)]
     pub ext_sensor_conv_en: u8,
-    #[bits(4, access = RO)]
+    #[bits(4, access = RO, default = 0)]
     /// Reserved bits.
     not_used0: u8,
 }
