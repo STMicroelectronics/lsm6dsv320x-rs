@@ -31,6 +31,7 @@ pub enum Error<B> {
     InvalidConfiguration,
     FailedToReadMemBank,
     FailedToSetMemBank(MemBank),
+    HwNoResponse,
 }
 
 impl<P, T> Lsm6dsv320x<I2cBus<P>, T>
@@ -404,9 +405,109 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
         }
     }
 
+    /// Perform reboot of the device
+    ///
+    /// Loads the trimming parameters.
+    /// Requires 30 ms to complete.
+    pub fn reboot(&mut self) -> Result<(), Error<B::Error>> {
+        let mut ctrl3 = Ctrl3::read(self)?;
+
+        // Cannot reboot if sw_reset has not completed.
+        if ctrl3.sw_reset() == 1 {
+            return Err(Error::HwNoResponse);
+        }
+
+        /* Save current data rates */
+        let xl_data_rate = self.xl_data_rate_get()?;
+        let gy_data_rate = self.gy_data_rate_get()?;
+        let (hg_xl_data_rate, reg_out_en) = self.hg_xl_data_rate_get()?;
+
+        /* 1. Set the low-g accelerometer, high-g accelerometer, and gyroscope in power-down mode */
+        self.xl_data_rate_set(DataRate::Off)?;
+        self.gy_data_rate_set(DataRate::Off)?;
+        self.hg_xl_data_rate_set(HgXlDataRate::Off, 0)?;
+
+        /* 2. Set the BOOT bit of the CTRL3 register to 1. */
+        ctrl3.set_boot(1);
+        ctrl3.write(self)?;
+
+        /* 3. Wait 30 ms. */
+        self.tim.delay_ms(30);
+
+        /* Restore data rates */
+        self.xl_data_rate_set(xl_data_rate)?;
+        self.gy_data_rate_set(gy_data_rate)?;
+        self.hg_xl_data_rate_set(hg_xl_data_rate, reg_out_en)
+    }
+
+    /// Perform s/w reset of the device.
+    ///
+    /// The software reset procedure takes approximately 150 µs;
+    /// this function handles the wait internally (one reading after 150 us
+    /// for a maximum of 3 attempts).
+    ///
+    /// reset to default value the control registers:
+    /// - FUNC_CFG_ACCESS (01h)
+    /// - ODR_TRIG_CFG (06h) through ALL_INT_SRC (1Dh)
+    /// - TIMESTAMP0 (40h) through TIMESTAMP3 (43h)
+    /// - WAKE_UP_SRC (45h) through D6D_SRC (47h)
+    /// - HG_WAKE_UP_SRC (4Ch) through CTRL1_XL_HG (4Eh)
+    /// - FUNCTIONS_ENABLE (50h) through UI_HANDSHAKE_CTRL (64h)
+    /// - CTRL_EIS (6Bh) through Z_OFS_USR (75h)
+    /// - FIFO_DATA_OUT_TAG (78h)
+    pub fn sw_reset(&mut self) -> Result<(), Error<B::Error>> {
+        let mut ctrl3 = Ctrl3::default();
+        let mut retry: u8 = 0;
+
+        /* 1. Set the low-g accelerometer, high-g accelerometer, and gyroscope in power-down mode */
+        self.xl_data_rate_set(DataRate::Off)?;
+        self.gy_data_rate_set(DataRate::Off)?;
+        self.hg_xl_data_rate_set(HgXlDataRate::Off, 0)?;
+
+        /* 2. Set the SW_RESET bit of the CTRL3 register to 1. */
+        ctrl3.set_sw_reset(1);
+        ctrl3.write(self)?;
+
+        /* 3. Poll the SW_RESET bit of the CTRL3 register until it returns to 0. */
+        loop {
+            ctrl3 = Ctrl3::read(self)?;
+
+            if ctrl3.sw_reset() == 0 {
+                return Ok(());
+            }
+
+            retry += 1;
+            if retry > 3 {
+                break;
+            }
+
+            self.tim.delay_us(150);
+        }
+
+        Err(Error::HwNoResponse)
+    }
+
+    /// Perform power-on-reset of the device
+    ///
+    /// Performs a full reset of the device, including boot, software reset,
+    /// and resettng embedded functions and internal filters.
+    pub fn sw_por(&mut self) -> Result<(), Error<B::Error>> {
+        let mut func_cfg_access = FuncCfgAccess::default();
+
+        /* 1. Set the SW_POR bit of the FUNC_CFG_ACCESS register to 1. */
+        func_cfg_access.set_sw_por(1);
+        func_cfg_access.write(self)?;
+
+        /* 2. Wait 30 ms. */
+        self.tim.delay_ms(30);
+
+        Ok(())
+    }
+
     /// Reset of the device.
     ///
     /// Reset type choosen using `Reset` enum.
+    #[deprecated(since = "2.0.0", note = "please use sw_reset")]
     pub fn reset_set(&mut self, val: Reset) -> Result<(), Error<B::Error>> {
         let mut func_cfg_access = FuncCfgAccess::read(self)?;
         let mut ctrl3 = Ctrl3::read(self)?;
@@ -419,6 +520,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
         func_cfg_access.write(self)
     }
 
+    #[deprecated(since = "2.0.0", note = "please use sw_reset")]
     pub fn reset_get(&mut self) -> Result<Reset, Error<B::Error>> {
         let ctrl3 = Ctrl3::read(self)?;
         let func_cfg_access = FuncCfgAccess::read(self)?;

@@ -2059,6 +2059,7 @@ pub struct I3cConfig {
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, TryFrom)]
 #[try_from(repr)]
+#[deprecated(since = "2.0.0", note = "please use sw_reset/sw_por/reboot functions")]
 pub enum Reset {
     /// No reset, device ready state.
     Ready = 0x0,
