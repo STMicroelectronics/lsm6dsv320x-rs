@@ -874,13 +874,8 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
 
     /// Set the signals that need to be routed on int1 pad.
     ///
-    /// See `PinIntRoute` for a complete list of available events.
-    /// Data ready temperature and g-eis are available on int2
-    pub fn pin_int1_route_set(&mut self, val: &PinIntRoute) -> Result<(), Error<B::Error>> {
-        if val.drdy_temp == 1 {
-            return Err(Error::UnexpectedValue);
-        }
-
+    /// See `PinInt1Route` for a complete list of available events.
+    pub fn pin_int1_route_set(&mut self, val: &PinInt1Route) -> Result<(), Error<B::Error>> {
         let mut int1_ctrl = Int1Ctrl::read(self)?;
         int1_ctrl.set_int1_drdy_xl(val.drdy_xl);
         int1_ctrl.set_int1_drdy_g(val.drdy_g);
@@ -918,11 +913,11 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     ///     - sleep_change
     ///
     /// The remaining are leaved default
-    pub fn pin_int1_route_get(&mut self) -> Result<PinIntRoute, Error<B::Error>> {
+    pub fn pin_int1_route_get(&mut self) -> Result<PinInt1Route, Error<B::Error>> {
         let int1_ctrl = Int1Ctrl::read(self)?;
         let md1_cfg = Md1Cfg::read(self)?;
 
-        let val = PinIntRoute {
+        let val = PinInt1Route {
             drdy_xl: int1_ctrl.int1_drdy_xl(),
             drdy_g: int1_ctrl.int1_drdy_g(),
             fifo_th: int1_ctrl.int1_fifo_th(),
@@ -943,7 +938,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     }
 
     /// Set the signals that need to be routed on int2 pad.
-    pub fn pin_int2_route_set(&mut self, val: &PinIntRoute) -> Result<(), Error<B::Error>> {
+    pub fn pin_int2_route_set(&mut self, val: &PinInt2Route) -> Result<(), Error<B::Error>> {
         let mut int2_ctrl = Int2Ctrl::read(self)?;
 
         int2_ctrl.set_int2_drdy_xl(val.drdy_xl);
@@ -975,26 +970,12 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     }
 
     /// Report the signals that are routed on int2 pad.
-    /// Values returned are:
-    ///     - drdy_xl
-    ///     - drdy_g
-    ///     - fifo_th
-    ///     - cnt_bdr
-    ///     - drdy_g_eis
-    ///     - emb_func_endop
-    ///     - timestamp
-    ///     - single_tap
-    ///     - double_tap
-    ///     - wakeup
-    ///     - freefall
-    ///     - sleep_change
-    ///     - drdy_temp
-    pub fn pin_int2_route_get(&mut self) -> Result<PinIntRoute, Error<B::Error>> {
+    pub fn pin_int2_route_get(&mut self) -> Result<PinInt2Route, Error<B::Error>> {
         let int2_ctrl = Int2Ctrl::read(self)?;
         let ctrl4 = Ctrl4::read(self)?;
         let md2_cfg = Md2Cfg::read(self)?;
 
-        let route = PinIntRoute {
+        let route = PinInt2Route {
             drdy_xl: int2_ctrl.int2_drdy_xl(),
             drdy_g: int2_ctrl.int2_drdy_g(),
             fifo_th: int2_ctrl.int2_fifo_th(),
@@ -1018,11 +999,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     }
 
     /// Select the signals that need to be routed on int1 pad. (hg part)
-    /// Fields set are:
-    ///     - drdy_hg_xl
-    ///     - hg_wakeup
-    ///     - hg_shock_change
-    pub fn pin_int1_route_hg_set(&mut self, val: &PinIntRoute) -> Result<(), Error<B::Error>> {
+    pub fn pin_int1_route_hg_set(&mut self, val: &PinIntRouteHg) -> Result<(), Error<B::Error>> {
         let mut ctrl7 = Ctrl7::read(self)?;
         ctrl7.set_int1_drdy_xl_hg(val.drdy_hg_xl);
         ctrl7.write(self)?;
@@ -1043,27 +1020,22 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     ///     - drdy_hg_xl
     ///     - hg_wakeup
     ///     - hg_shock_change
-    pub fn pin_int1_route_hg_get(&mut self) -> Result<PinIntRoute, Error<B::Error>> {
+    pub fn pin_int1_route_hg_get(&mut self) -> Result<PinIntRouteHg, Error<B::Error>> {
         let ctrl7 = Ctrl7::read(self)?;
         let hg_func = HgFunctionsEnable::read(self)?;
         let reg_shock = InactivityThs::read(self)?;
 
-        let val = PinIntRoute {
+        let val = PinIntRouteHg {
             drdy_hg_xl: ctrl7.int1_drdy_xl_hg(),
             hg_shock_change: reg_shock.int1_hg_shock_change(),
             hg_wakeup: hg_func.int1_hg_wu(),
-            ..PinIntRoute::default()
         };
 
         Ok(val)
     }
 
     /// Select the signals that need to be routed on int2 pad. (hg part)
-    /// Fields set are:
-    ///     - drdy_hg_xl
-    ///     - hg_wakeup
-    ///     - hg_shock_change
-    pub fn pin_int2_route_hg_set(&mut self, val: &PinIntRoute) -> Result<(), Error<B::Error>> {
+    pub fn pin_int2_route_hg_set(&mut self, val: &PinIntRouteHg) -> Result<(), Error<B::Error>> {
         let mut ctrl7 = Ctrl7::read(self)?;
         ctrl7.set_int2_drdy_xl_hg(val.drdy_hg_xl);
         ctrl7.write(self)?;
@@ -1083,12 +1055,12 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     ///     - drdy_hg_xl
     ///     - hg_wakeup
     ///     - hg_shock_change
-    pub fn pin_int2_route_hg_get(&mut self) -> Result<PinIntRoute, Error<B::Error>> {
+    pub fn pin_int2_route_hg_get(&mut self) -> Result<PinIntRouteHg, Error<B::Error>> {
         let ctrl7 = Ctrl7::read(self)?;
         let hg_func = HgFunctionsEnable::read(self)?;
         let reg_shock = InactivityThs::read(self)?;
 
-        let val = PinIntRoute {
+        let val = PinIntRouteHg {
             drdy_hg_xl: ctrl7.int2_drdy_xl_hg(),
             hg_wakeup: hg_func.int2_hg_wu(),
             hg_shock_change: reg_shock.int2_hg_shock_change(),
@@ -1099,16 +1071,9 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     }
 
     /// Select the signals that need to be routed on int1 pad. (embedded events)
-    ///
-    /// Events include:
-    ///     - step detector
-    ///     - tilt
-    ///     - significat motion (sig_mot)
-    ///     - fsm1..9
-    ///     - mlc1..9
     pub fn pin_int1_route_embedded_set(
         &mut self,
-        val: &PinIntRoute,
+        val: &PinIntRouteEmb,
     ) -> Result<(), Error<B::Error>> {
         let mut md1_cfg = Md1Cfg::read(self)?;
         md1_cfg.set_int1_emb_func(1);
@@ -1146,21 +1111,13 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     }
 
     /// Report the signals that are routed on int1 pad.
-    ///
-    /// Events include:
-    ///     - fsm1..9: each fsm settings
-    ///     - mlc1..9: each mlc settings
-    ///     - significant motion (sig_mot)
-    ///     - titl
-    ///     - step detector
-    /// The remaining field are not read and set to 0
-    pub fn pin_int1_route_embedded_get(&mut self) -> Result<PinIntRoute, Error<B::Error>> {
+    pub fn pin_int1_route_embedded_get(&mut self) -> Result<PinIntRouteEmb, Error<B::Error>> {
         MemBank::operate_over_embed(self, |lock| {
             let emb_func_int1 = EmbFuncInt1::read(lock)?;
             let fsm_int1 = FsmInt1::read(lock)?;
             let mlc_int1 = MlcInt1::read(lock)?;
 
-            Ok(PinIntRoute {
+            Ok(PinIntRouteEmb {
                 step_detector: emb_func_int1.int1_step_detector(),
                 tilt: emb_func_int1.int1_tilt(),
                 sig_mot: emb_func_int1.int1_sig_mot(),
@@ -1180,22 +1137,14 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
                 mlc6: mlc_int1.int1_mlc6(),
                 mlc7: mlc_int1.int1_mlc7(),
                 mlc8: mlc_int1.int1_mlc8(),
-                ..Default::default()
             })
         })
     }
 
     /// Select the signals that need to be routed on int2 pad. (embedded events)
-    ///
-    /// Events include:
-    ///     - step detector
-    ///     - tilt
-    ///     - significat motion (sig_mot)
-    ///     - fsm1..9
-    ///     - mlc1..9
     pub fn pin_int2_route_embedded_set(
         &mut self,
-        val: &PinIntRoute,
+        val: &PinIntRouteEmb,
     ) -> Result<(), Error<B::Error>> {
         let mut md2_cfg = Md2Cfg::read(self)?;
         md2_cfg.set_int2_emb_func(1);
@@ -1233,21 +1182,13 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     }
 
     /// Report the signals that are routed on int2 pad.
-    ///
-    /// Events include:
-    ///     - fsm1..9: each fsm settings
-    ///     - mlc1..9: each mlc settings
-    ///     - significant motion (sig_mot)
-    ///     - titl
-    ///     - step detector
-    /// The remaining field are not read and set to 0
-    pub fn pin_int2_route_embedded_get(&mut self) -> Result<PinIntRoute, Error<B::Error>> {
+    pub fn pin_int2_route_embedded_get(&mut self) -> Result<PinIntRouteEmb, Error<B::Error>> {
         MemBank::operate_over_embed(self, |lock| {
             let emb_func_int2 = EmbFuncInt2::read(lock)?;
             let fsm_int2 = FsmInt2::read(lock)?;
             let mlc_int2 = MlcInt2::read(lock)?;
 
-            Ok(PinIntRoute {
+            Ok(PinIntRouteEmb {
                 step_detector: emb_func_int2.int2_step_detector(),
                 tilt: emb_func_int2.int2_tilt(),
                 sig_mot: emb_func_int2.int2_sig_mot(),
@@ -1267,7 +1208,6 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
                 mlc6: mlc_int2.int2_mlc6(),
                 mlc7: mlc_int2.int2_mlc7(),
                 mlc8: mlc_int2.int2_mlc8(),
-                ..Default::default()
             })
         })
     }

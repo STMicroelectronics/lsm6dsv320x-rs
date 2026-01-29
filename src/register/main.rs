@@ -1897,18 +1897,13 @@ pub struct InterruptMode {
 }
 
 #[derive(Default)]
-pub struct PinIntRoute {
+pub struct PinInt1Route {
     pub drdy_xl: u8,
     pub drdy_g: u8,
-    /// available only on pin2
-    pub drdy_g_eis: u8,
-    /// available only on pin2
-    pub drdy_temp: u8,
     pub fifo_th: u8,
     pub fifo_ovr: u8,
     pub fifo_full: u8,
     pub cnt_bdr: u8,
-    pub timestamp: u8,
     pub shub: u8,
     pub sixd: u8,
     pub single_tap: u8,
@@ -1916,13 +1911,40 @@ pub struct PinIntRoute {
     pub wakeup: u8,
     pub freefall: u8,
     pub sleep_change: u8,
+}
+
+#[derive(Default)]
+pub struct PinInt2Route {
+    pub drdy_xl: u8,
+    pub drdy_g: u8,
+    pub drdy_g_eis: u8,
+    pub drdy_temp: u8,
+    pub fifo_th: u8,
+    pub fifo_ovr: u8,
+    pub fifo_full: u8,
+    pub cnt_bdr: u8,
+    pub timestamp: u8,
+    pub sixd: u8,
+    pub single_tap: u8,
+    pub double_tap: u8,
+    pub wakeup: u8,
+    pub freefall: u8,
+    pub sleep_change: u8,
+    pub emb_func_endop: u8,
+}
+
+#[derive(Default)]
+pub struct PinIntRouteHg {
     pub drdy_hg_xl: u8,
     pub hg_wakeup: u8,
     pub hg_shock_change: u8,
+}
+
+#[derive(Default)]
+pub struct PinIntRouteEmb {
     pub step_detector: u8,
     pub tilt: u8,
     pub sig_mot: u8,
-    pub emb_func_endop: u8,
     pub fsm1: u8,
     pub fsm2: u8,
     pub fsm3: u8,
