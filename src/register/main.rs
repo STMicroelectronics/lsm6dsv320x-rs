@@ -2734,12 +2734,12 @@ pub enum UiI2cI3cMode {
 #[try_from(repr)]
 pub enum PadStrength {
     /// Lowest drive strength.
-    Low = 0x1,
+    Low = 0x0,
     /// Intermediate drive strength.
-    Middle = 0x2,
+    Middle = 0x1,
     /// Highest drive strength.
     #[default]
-    High = 0x4,
+    High = 0x3,
 }
 
 /// SPI serial interface mode selection.
@@ -2866,8 +2866,8 @@ pub enum IbiTime {
 #[try_from(repr)]
 pub enum RstMode {
     /// Configuration reset (software reset + dynamic address reset).
-    #[default]
     SwRstDynAddress = 0x0,
+    #[default]
     /// Global reset (power-on reset).
     I3cGlobal = 0x1,
 }
