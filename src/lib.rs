@@ -3331,10 +3331,10 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     }
 
     /// Set the rate at which the controller communicates.
-    pub fn sh_data_rate_set(&mut self, val: u8) -> Result<(), Error<B::Error>> {
+    pub fn sh_data_rate_set(&mut self, val: ShDataRate) -> Result<(), Error<B::Error>> {
         MemBank::operate_over_sensor_hub(self, |lock| {
             let mut tgt0_config = Tgt0Config::read(lock)?;
-            tgt0_config.set_shub_odr(val & 0x07);
+            tgt0_config.set_shub_odr(val as u8 & 0x07);
             tgt0_config.write(lock)
         })
     }
