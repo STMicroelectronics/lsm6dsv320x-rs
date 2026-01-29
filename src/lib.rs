@@ -2274,14 +2274,16 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     pub fn filt_xl_hp_mode_set(&mut self, val: FiltXlHpMode) -> Result<(), Error<B::Error>> {
         let mut ctrl9 = Ctrl9::read(self)?;
         ctrl9.set_hp_ref_mode_xl((val as u8) & 0x01);
+        ctrl9.set_hp_slope_xl_en(((val as u8) & 0x02) >> 1);
         ctrl9.write(self)
     }
 
     /// Get Accelerometer high-pass filter mode.
     pub fn filt_xl_hp_mode_get(&mut self) -> Result<FiltXlHpMode, Error<B::Error>> {
         let ctrl9 = Ctrl9::read(self)?;
+        let value = ctrl9.hp_ref_mode_xl() | (ctrl9.hp_slope_xl_en() << 1);
 
-        let val = FiltXlHpMode::try_from(ctrl9.hp_ref_mode_xl()).unwrap_or_default();
+        let val = FiltXlHpMode::try_from(value).unwrap_or_default();
         Ok(val)
     }
 

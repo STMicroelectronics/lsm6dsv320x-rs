@@ -2527,9 +2527,10 @@ pub enum FiltLpBandwidth {
 pub enum FiltXlHpMode {
     /// Normal mode (default).
     #[default]
-    Normal = 0x0,
+    NormalSlopeOff = 0x0,
+    NormalSlopeOn = 0x2,
     /// Reference mode.
-    Reference = 0x1,
+    Reference = 0x3,
 }
 
 /// Filter selection for wake-up and activity/inactivity functions.
