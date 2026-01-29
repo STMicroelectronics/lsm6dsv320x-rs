@@ -2543,7 +2543,7 @@ pub enum FiltWkupActFeed {
     /// High-pass filter applied.
     HighPass = 0x1,
     /// Low-pass filter with offset.
-    LpWithOffset = 0x2,
+    LpWithOffset = 0x3,
 }
 
 /// LPF2 filter on 6D (sixd) function selection.
