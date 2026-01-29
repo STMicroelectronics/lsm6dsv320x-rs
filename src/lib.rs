@@ -2027,6 +2027,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
 
     /// Enable FIFO data batching of target idx.
     pub fn fifo_sh_batch_target_set(&mut self, idx: u8, val: u8) -> Result<(), Error<B::Error>> {
+        assert!(idx <= 3);
         MemBank::operate_over_sensor_hub(self, |state| {
             let mut arr: [u8; 1] = [0];
             state.read_from_register(SensHubReg::Tgt0Config as u8 + idx * 3, &mut arr)?;
@@ -2042,6 +2043,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
 
     /// Get the actual configuration (enable/disable) FIFO data batching of target idx.
     pub fn fifo_sh_batch_target_get(&mut self, idx: u8) -> Result<u8, Error<B::Error>> {
+        assert!(idx <= 3);
         MemBank::operate_over_sensor_hub(self, |state| {
             let mut arr: [u8; 1] = [0];
             state.read_from_register(SensHubReg::Tgt0Config as u8 + idx * 3, &mut arr)?;
