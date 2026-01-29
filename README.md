@@ -27,7 +27,7 @@ Add the driver to your `Cargo.toml` dependencies:
 
 ```toml
 [dependencies]
-lsm6dsv320x-rs = "0.1.0"
+lsm6dsv320x-rs = "2.0.0"
 ```
 
 Or, add it directly from the terminal:
@@ -38,12 +38,30 @@ cargo add lsm6dsv320x-rs
 
 ## Usage
 
-Include the crate and its prelude
+By default, the create exposes the **asynchronous** API, and it could be included using:
 ```rust
-use lsm6dsv320x_rs as lsm6dsv320x;
+use lsm6dsv320x_rs::asynchronous as lsm6dsv320x;
 use lsm6dsv320x::*;
 use lsm6dsv320x::prelude::*;
 ```
+
+### Blocking API (optional feature)
+
+To use the **blocking** API instead of the asynchronous one, disable default features and enable the `blocking` feature in your Cargo.toml
+```toml
+[dependencies]
+lsm6dsv320x-rs = { version = "2.0.0", default-features = false, features = ["blocking"] }
+```
+or from the terminal:
+```sh
+cargo add lsm6dsv320x-rs --no-default-features --features blocking
+```
+
+Then import the blocking API:
+```rust
+use lsm6dsv320x_rs::blocking as lsm6dsv320x;
+use lsm6dsv320x::*;
+use lsm6dsv320x::prelude::*;
 
 ### Create an instance
 
