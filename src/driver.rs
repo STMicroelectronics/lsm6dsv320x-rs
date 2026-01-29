@@ -452,9 +452,13 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T, MainBank> {
         let gy_data_rate = self.gy_data_rate_get().await?;
         let (hg_xl_data_rate, reg_out_en) = self.hg_xl_data_rate_get().await?;
 
+        /* Save XL/GY current modes */
+        let xl_md = self.xl_mode_get().await?;
+        let gy_md = self.gy_mode_get().await?;
+
         /* 1. Set the low-g accelerometer, high-g accelerometer, and gyroscope in power-down mode */
-        self.xl_data_rate_set(DataRate::Off).await?;
-        self.gy_data_rate_set(DataRate::Off).await?;
+        self.xl_setup(DataRate::Off, xl_md).await?;
+        self.gy_setup(DataRate::Off, gy_md).await?;
         self.hg_xl_data_rate_set(HgXlDataRate::Off, 0).await?;
 
         /* 2. Set the BOOT bit of the CTRL3 register to 1. */
@@ -465,8 +469,8 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T, MainBank> {
         self.tim.delay_ms(30).await;
 
         /* Restore data rates */
-        self.xl_data_rate_set(xl_data_rate).await?;
-        self.gy_data_rate_set(gy_data_rate).await?;
+        self.xl_setup(xl_data_rate, xl_md).await?;
+        self.gy_setup(gy_data_rate, gy_md).await?;
         self.hg_xl_data_rate_set(hg_xl_data_rate, reg_out_en).await
     }
 
@@ -490,8 +494,8 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T, MainBank> {
         let mut retry: u8 = 0;
 
         /* 1. Set the low-g accelerometer, high-g accelerometer, and gyroscope in power-down mode */
-        self.xl_data_rate_set(DataRate::Off).await?;
-        self.gy_data_rate_set(DataRate::Off).await?;
+        self.xl_setup(DataRate::Off, XlMode::Normal).await?;
+        self.gy_setup(DataRate::Off, GyMode::LowPower).await?;
         self.hg_xl_data_rate_set(HgXlDataRate::Off, 0).await?;
 
         /* 2. Set the SW_RESET bit of the CTRL3 register to 1. */

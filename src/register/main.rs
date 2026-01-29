@@ -2062,8 +2062,8 @@ pub struct I3cConfig {
 
 /// Reset types for the device.
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, TryFrom)]
-#[try_from(repr)]
+#[allow(deprecated)]
+#[derive(Clone, Copy, PartialEq)]
 #[deprecated(since = "2.0.0", note = "please use sw_reset/sw_por/reboot functions")]
 pub enum Reset {
     /// No reset, device ready state.
@@ -2074,6 +2074,21 @@ pub enum Reset {
     RestoreCalParam = 0x2,
     /// Restore control registers to default values.
     RestoreCtrlRegs = 0x4,
+}
+
+#[allow(deprecated)]
+impl TryFrom<u8> for Reset {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0x0 => Ok(Reset::Ready),
+            0x1 => Ok(Reset::GlobalRst),
+            0x2 => Ok(Reset::RestoreCalParam),
+            0x4 => Ok(Reset::RestoreCtrlRegs),
+            _ => Err(()),
+        }
+    }
 }
 
 /// Output Data Rate (ODR) settings for accelerometer and gyroscope.
