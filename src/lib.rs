@@ -365,15 +365,15 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
         {
             ctrl1_xl_hg.set_hg_usr_off_on_out(1);
 
-            ofs_usr.z = (val.z_mg / 0.25) as u8;
-            ofs_usr.y = (val.y_mg / 0.25) as u8;
-            ofs_usr.x = (val.x_mg / 0.25) as u8;
+            ofs_usr.z = (val.z_mg / 0.25) as i8;
+            ofs_usr.y = (val.y_mg / 0.25) as i8;
+            ofs_usr.x = (val.x_mg / 0.25) as i8;
         } else {
             // out of limit
             ctrl1_xl_hg.set_hg_usr_off_on_out(0);
-            ofs_usr.x = 0xFF;
-            ofs_usr.y = 0xFF;
-            ofs_usr.z = 0xFF;
+            ofs_usr.x = 0xFFu8 as i8;
+            ofs_usr.y = 0xFFu8 as i8;
+            ofs_usr.z = 0xFFu8 as i8;
         }
 
         ofs_usr.write(self)?;
