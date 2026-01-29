@@ -563,7 +563,7 @@ pub struct Ext3byteOffsetH {
     pub ext_3byte_off: u8,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, Debug, PartialEq)]
 pub struct XlFsmExtSensOffset {
     pub z: u16,
     pub y: u16,
@@ -574,7 +574,7 @@ pub struct XlFsmExtSensOffset {
 ///
 /// Defines how external sensor Z-axis is mapped to device axes.
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Default, TryFrom)]
+#[derive(Clone, Copy, PartialEq, Default, Debug, TryFrom)]
 #[try_from(repr)]
 pub enum FsmExtSensZOrient {
     /// Z axis equals Y axis (default).
@@ -596,7 +596,7 @@ pub enum FsmExtSensZOrient {
 ///
 /// Defines how external sensor Y-axis is mapped to device axes.
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Default, TryFrom)]
+#[derive(Clone, Copy, PartialEq, Default, Debug, TryFrom)]
 #[try_from(repr)]
 pub enum FsmExtSensYOrient {
     /// Y axis equals Y axis (default).
@@ -618,7 +618,7 @@ pub enum FsmExtSensYOrient {
 ///
 /// Defines how external sensor X-axis is mapped to device axes.
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Default, TryFrom)]
+#[derive(Clone, Copy, PartialEq, Default, Debug, TryFrom)]
 #[try_from(repr)]
 pub enum FsmExtSensXOrient {
     /// X axis equals Y axis (default).
@@ -636,7 +636,7 @@ pub enum FsmExtSensXOrient {
     XEqZ = 0x5,
 }
 
-#[derive(Clone, Copy, Default, MultiRegister)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, MultiRegister)]
 pub struct XlFsmExtSensMatrix {
     pub xx: u16,
     pub xy: u16,

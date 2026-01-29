@@ -24,7 +24,7 @@ pub struct Lsm6dsv320x<B: BusOperation, T: DelayNs> {
     pub tim: T,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Error<B> {
     Bus(B),          // Error at the bus level
     UnexpectedValue, // Unexpected value read from a register

@@ -1186,7 +1186,7 @@ pub struct Mlc8Src {
     pub mlc8_src: u8,
 }
 
-#[derive(Default, MultiRegister)]
+#[derive(Default, MultiRegister, Debug, Clone, PartialEq)]
 pub struct MlcOut {
     pub mlc1_src: u8,
     pub mlc2_src: u8,
@@ -1198,7 +1198,7 @@ pub struct MlcOut {
     pub mlc8_src: u8,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, PartialEq, Clone)]
 pub struct EmbFuncConv {
     pub xl_hg_conv_en: u8,
     pub gyro_conv_en: u8,
@@ -1206,14 +1206,14 @@ pub struct EmbFuncConv {
     pub ext_sensor_conv_en: u8,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, PartialEq, Clone)]
 pub struct FifoSflpRaw {
     pub game_rotation: u8,
     pub gravity: u8,
     pub gbias: u8,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct FsmMode {
     pub fsm1_en: u8,
     pub fsm2_en: u8,
@@ -1225,7 +1225,7 @@ pub struct FsmMode {
     pub fsm8_en: u8,
 }
 
-#[derive(Default, MultiRegister)]
+#[derive(Default, MultiRegister, Debug, Clone, PartialEq)]
 pub struct FsmOut {
     pub fsm_outs1: u8,
     pub fsm_outs2: u8,
@@ -1237,20 +1237,20 @@ pub struct FsmOut {
     pub fsm_outs8: u8,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct StpcntMode {
     pub step_counter_enable: u8,
     pub false_step_rej: u8,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct SflpGbias {
     pub gbias_x: f32,
     pub gbias_y: f32,
     pub gbias_z: f32,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct Quaternion {
     pub quat_w: f32,
     pub quat_x: f32,
@@ -1260,7 +1260,7 @@ pub struct Quaternion {
 
 /// Finite State Machine (FSM) output data rate configuration.
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Default, TryFrom)]
+#[derive(Clone, Copy, PartialEq, Default, Debug, TryFrom)]
 #[try_from(repr)]
 pub enum FsmDataRate {
     /// 15 Hz output data rate (default).
@@ -1286,7 +1286,7 @@ pub enum FsmDataRate {
 /// - `On`: MLC enabled after FSM programs.
 /// - `OnBeforeFsm`: MLC enabled before FSM programs.
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum MlcMode {
     /// MLC disabled.
     Off = 0x0,
@@ -1298,7 +1298,7 @@ pub enum MlcMode {
 
 /// Machine Learning Core (MLC) output data rate configuration.
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Default, TryFrom)]
+#[derive(Clone, Copy, PartialEq, Default, Debug, TryFrom)]
 #[try_from(repr)]
 pub enum MlcDataRate {
     /// 15 Hz output data rate (default).
@@ -1320,7 +1320,7 @@ pub enum MlcDataRate {
 
 /// Sensor fusion low-power (SFLP) algorithm output data rate.
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Default, TryFrom)]
+#[derive(Clone, Copy, PartialEq, Default, Debug, TryFrom)]
 #[try_from(repr)]
 pub enum SflpDataRate {
     /// 15 Hz output data rate.

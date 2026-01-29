@@ -232,14 +232,14 @@ pub struct If2Ctrl3Ois {
     not_used1: u8,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct FiltOisSettlingMask {
     pub ois_drdy: u8,
 }
 
 /// OIS gyroscope self-test selection.
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum OisGySelfTest {
     /// Self-test disabled.
     Disable = 0x0,

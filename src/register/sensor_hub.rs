@@ -523,7 +523,7 @@ pub struct ShCfgRead {
 
 /// Number of external sensors connected to the sensor hub.
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Default, TryFrom)]
+#[derive(Clone, Copy, PartialEq, Default, Debug, TryFrom)]
 #[try_from(repr)]
 pub enum ShTargetConnected {
     /// One external sensor connected.
@@ -539,7 +539,7 @@ pub enum ShTargetConnected {
 
 /// Sensor hub trigger signal selection.
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Default, TryFrom)]
+#[derive(Clone, Copy, PartialEq, Default, Debug, TryFrom)]
 #[try_from(repr)]
 pub enum ShSyncroMode {
     /// Sensor hub trigger is accelerometer/gyroscope data-ready.
@@ -551,7 +551,7 @@ pub enum ShSyncroMode {
 
 /// Sensor hub write mode for target 0.
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Default, TryFrom)]
+#[derive(Clone, Copy, PartialEq, Default, Debug, TryFrom)]
 #[try_from(repr)]
 pub enum ShWriteMode {
     /// Write operation for each sensor hub cycle.
@@ -563,7 +563,7 @@ pub enum ShWriteMode {
 
 /// Sensor hub communication data rate.
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Default, TryFrom)]
+#[derive(Clone, Copy, PartialEq, Default, Debug, TryFrom)]
 #[try_from(repr)]
 pub enum ShDataRate {
     /// 1.875 Hz data rate.
