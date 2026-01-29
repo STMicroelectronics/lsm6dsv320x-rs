@@ -1,11 +1,12 @@
-use crate::Error;
-use crate::Lsm6dsv320x;
+use super::super::{
+    BusOperation, DelayNs, Error, Lsm6dsv320x, RegisterOperation, SensorOperation, bisync,
+    register::{BankState, MainBank},
+};
+
 use bitfield_struct::bitfield;
-use core::fmt::Debug;
+
 use derive_more::TryFrom;
-use embedded_hal::delay::DelayNs;
 use st_mem_bank_macro::{named_register, register};
-use st_mems_bus::BusOperation;
 
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq)]
@@ -127,7 +128,7 @@ pub enum Reg {
 /// FuncCfgAccess (0x01)
 ///
 /// Enable embedded functions register (R/W)
-#[register(address = Reg::FuncCfgAccess, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::FuncCfgAccess, access_type = "Lsm6dsv320x<B, T, S>", multi_state = true)]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FuncCfgAccess {
@@ -156,7 +157,7 @@ pub struct FuncCfgAccess {
 /// PinCtrl (0x02)
 ///
 /// SDO, OCS_aux, SDO_aux pins pull-up control (R/W). Not reset by software reset.
-#[register(address = Reg::PinCtrl, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::PinCtrl, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct PinCtrl {
@@ -179,7 +180,7 @@ pub struct PinCtrl {
 /// IfCfg (0x03)
 ///
 /// Interface configuration register (R/W). Not reset by software reset.
-#[register(address = Reg::IfCfg, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::IfCfg, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct IfCfg {
@@ -211,7 +212,7 @@ pub struct IfCfg {
 /// OdrTrigCfg (0x06)
 ///
 /// ODR-triggered mode configuration register (R/W).
-#[register(address = Reg::OdrTrigCfg, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::OdrTrigCfg, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct OdrTrigCfg {
@@ -224,7 +225,7 @@ pub struct OdrTrigCfg {
 /// FifoCtrl1 (0x07)
 ///
 /// FIFO watermark threshold (R/W). 1 LSB = TAG (1 byte) + 1 sensor (6 bytes).
-#[register(address = Reg::FifoCtrl1, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::FifoCtrl1, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FifoCtrl1 {
@@ -236,7 +237,7 @@ pub struct FifoCtrl1 {
 /// FifoCtrl2 (0x08)
 ///
 /// FIFO control register 2 (R/W).
-#[register(address = Reg::FifoCtrl2, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::FifoCtrl2, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FifoCtrl2 {
@@ -264,7 +265,7 @@ pub struct FifoCtrl2 {
 /// FifoCtrl3 (0x09)
 ///
 /// FIFO batch data rate configuration for accelerometer and gyroscope (R/W).
-#[register(address = Reg::FifoCtrl3, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::FifoCtrl3, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FifoCtrl3 {
@@ -279,7 +280,7 @@ pub struct FifoCtrl3 {
 /// FifoCtrl4 (0x0A)
 ///
 /// FIFO control register 4 (R/W).
-#[register(address = Reg::FifoCtrl4, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::FifoCtrl4, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FifoCtrl4 {
@@ -300,7 +301,7 @@ pub struct FifoCtrl4 {
 /// CounterBdrReg1 - CounterBdrReg2 (0x0B - 0x0C)
 ///
 /// Counter batch data rate register 1 (R/W).
-#[register(address = Reg::CounterBdrReg1, access_type = Lsm6dsv320x, generics = 2, order = Inverse)]
+#[register(address = Reg::CounterBdrReg1, access_type = "Lsm6dsv320x<B, T, MainBank>", order = Inverse)]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u16, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u16, order = Lsb))]
 pub struct CounterBdr {
@@ -324,7 +325,7 @@ pub struct CounterBdr {
 /// CounterBdrReg1 (0x0B)
 ///
 /// Counter batch data rate register 1 (R/W).
-#[register(address = Reg::CounterBdrReg1, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::CounterBdrReg1, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct CounterBdrReg1 {
@@ -348,7 +349,7 @@ pub struct CounterBdrReg1 {
 /// CounterBdrReg2 (0x0C)
 ///
 /// Counter batch data rate register 2 (R/W).
-#[register(address = Reg::CounterBdrReg2, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::CounterBdrReg2, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct CounterBdrReg2 {
@@ -360,7 +361,7 @@ pub struct CounterBdrReg2 {
 /// Int1Ctrl (0x0D)
 ///
 /// INT1 pin control register (R/W). Enables signals routed to INT1 pin.
-#[register(address = Reg::Int1Ctrl, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Int1Ctrl, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Int1Ctrl {
@@ -391,7 +392,7 @@ pub struct Int1Ctrl {
 /// Int2Ctrl (0x0E)
 ///
 /// INT2 pin control register (R/W). Enables signals routed to INT2 pin.
-#[register(address = Reg::Int2Ctrl, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Int2Ctrl, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Int2Ctrl {
@@ -424,7 +425,7 @@ pub struct Int2Ctrl {
 /// WhoAmI (0x0F)
 ///
 /// Read-only device identification register; fixed value 0x73.
-#[register(address = Reg::WhoAmI, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::WhoAmI, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct WhoAmI {
@@ -435,7 +436,7 @@ pub struct WhoAmI {
 /// CTRL1 (0x10)
 ///
 /// Accelerometer control register 1 (R/W)
-#[register(address = Reg::Ctrl1, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Ctrl1, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Ctrl1 {
@@ -453,7 +454,7 @@ pub struct Ctrl1 {
 /// CTRL2 (0x11)
 ///
 /// Gyroscope control register 2 (R/W)
-#[register(address = Reg::Ctrl2, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Ctrl2, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Ctrl2 {
@@ -471,7 +472,7 @@ pub struct Ctrl2 {
 /// CTRL3 (0x12)
 ///
 /// Control register 3 (R/W)
-#[register(address = Reg::Ctrl3, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Ctrl3, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Ctrl3 {
@@ -498,7 +499,7 @@ pub struct Ctrl3 {
 /// CTRL4 (0x13)
 ///
 /// Control register 4 (R/W)
-#[register(address = Reg::Ctrl4, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Ctrl4, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Ctrl4 {
@@ -525,7 +526,7 @@ pub struct Ctrl4 {
 /// CTRL5 (0x14)
 ///
 /// Control register 5 (R/W)
-#[register(address = Reg::Ctrl5, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Ctrl5, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Ctrl5 {
@@ -546,7 +547,7 @@ pub struct Ctrl5 {
 /// CTRL6 (0x15)
 ///
 /// Control register 6 (R/W)
-#[register(address = Reg::Ctrl6, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Ctrl6, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Ctrl6 {
@@ -567,7 +568,7 @@ pub struct Ctrl6 {
 /// CTRL7 (0x16)
 ///
 /// Control register 7 (R/W)
-#[register(address = Reg::Ctrl7, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Ctrl7, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Ctrl7 {
@@ -588,7 +589,7 @@ pub struct Ctrl7 {
 /// CTRL8 (0x17)
 ///
 /// Control register 8 (R/W)
-#[register(address = Reg::Ctrl8, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Ctrl8, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Ctrl8 {
@@ -606,7 +607,7 @@ pub struct Ctrl8 {
 /// CTRL9 (0x18)
 ///
 /// Control register 9 (R/W)
-#[register(address = Reg::Ctrl9, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Ctrl9, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Ctrl9 {
@@ -639,7 +640,7 @@ pub struct Ctrl9 {
 /// CTRL10 (0x19)
 ///
 /// Control register 10 (R/W)
-#[register(address = Reg::Ctrl10, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Ctrl10, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Ctrl10 {
@@ -663,7 +664,7 @@ pub struct Ctrl10 {
 /// CTRL_STATUS (0x1A)
 ///
 /// Control status register (R)
-#[register(address = Reg::CtrlStatus, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::CtrlStatus, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct CtrlStatus {
@@ -681,7 +682,7 @@ pub struct CtrlStatus {
 /// FIFO_STATUS1 - FIFO_STATUS2 (0x1B - 0x1C)
 ///
 /// FIFO status register 1, 2 (R)
-#[register(address = Reg::FifoStatus1, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::FifoStatus1, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u16, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u16, order = Lsb))]
 pub struct FifoStatusReg {
@@ -711,7 +712,7 @@ pub struct FifoStatusReg {
 /// ALL_INT_SRC (0x1D)
 ///
 /// Source register for all interrupts (R)
-#[register(address = Reg::AllIntSrc, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::AllIntSrc, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct AllIntSrc {
@@ -744,7 +745,7 @@ pub struct AllIntSrc {
 /// STATUS_REG (0x1E)
 ///
 /// Status register (R)
-#[register(address = Reg::StatusReg, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::StatusReg, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct StatusReg {
@@ -776,13 +777,13 @@ pub struct StatusReg {
 /// OutTemp (0x20, 0x21)
 ///
 /// Temperature sensor output data (16-bit two's complement)
-#[register(address = Reg::OutTempL, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::OutTempL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 pub struct OutTemp(pub i16);
 
 /// OutXYZG (0x22 - 0x27)
 ///
 /// Gyroscope X, Y, Z axis angular rate output (3 x 16-bit two's complement)
-#[named_register(address = Reg::OutxLG, access_type = Lsm6dsv320x, generics = 2)]
+#[named_register(address = Reg::OutxLG, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 pub struct OutXYZG {
     pub x: i16,
     pub y: i16,
@@ -792,7 +793,7 @@ pub struct OutXYZG {
 /// OutXYZA (0x28 - 0x2D)
 ///
 /// Accelerometer X, Y, Z axis linear acceleration output (3 x 16-bit two's complement)
-#[named_register(address = Reg::OutxLA, access_type = Lsm6dsv320x, generics = 2)]
+#[named_register(address = Reg::OutxLA, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 pub struct OutXYZA {
     pub x: i16,
     pub y: i16,
@@ -802,7 +803,7 @@ pub struct OutXYZA {
 /// UiOutXYZGOisEis (0x2E - 0x33)
 ///
 /// Gyroscope OIS/EIS output for X, Y, Z axes (3 x 16-bit two's complement)
-#[named_register(address = Reg::UiOutxLGOisEis, access_type = Lsm6dsv320x, generics = 2)]
+#[named_register(address = Reg::UiOutxLGOisEis, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 pub struct UiOutXYZGOisEis {
     pub x: i16,
     pub y: i16,
@@ -812,7 +813,7 @@ pub struct UiOutXYZGOisEis {
 /// UiOutXYZAOisHg (0x34 - 0x39)
 ///
 /// Accelerometer OIS/high-g output for X, Y, Z axes (3 x 16-bit two's complement)
-#[named_register(address = Reg::UiOutxLAOisHg, access_type = Lsm6dsv320x, generics = 2)]
+#[named_register(address = Reg::UiOutxLAOisHg, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 pub struct UiOutXYZAOisHg {
     pub x: i16,
     pub y: i16,
@@ -822,13 +823,13 @@ pub struct UiOutXYZAOisHg {
 /// TIMESTAMP (0x40 - 0x43)
 ///
 /// The value is expressed as a 32-bit word and the bit resolution is 21.7 µs(typical)
-#[register(address = Reg::Timestamp0, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Timestamp0, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 pub struct Timestamp(pub u32);
 
 /// UI_STATUS_REG_OIS (0x44)
 ///
 /// OIS status register (R)
-#[register(address = Reg::UiStatusRegOis, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::UiStatusRegOis, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct UiStatusRegOis {
@@ -849,7 +850,7 @@ pub struct UiStatusRegOis {
 /// WAKE_UP_SRC (0x45)
 ///
 /// Wake-up interrupt source register (R)
-#[register(address = Reg::WakeUpSrc, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::WakeUpSrc, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct WakeUpSrc {
@@ -882,7 +883,7 @@ pub struct WakeUpSrc {
 /// TAP_SRC (0x46)
 ///
 /// Tap source register (R)
-#[register(address = Reg::TapSrc, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::TapSrc, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct TapSrc {
@@ -915,7 +916,7 @@ pub struct TapSrc {
 /// D6D_SRC (0x47)
 ///
 /// Portrait, landscape, face-up and face-down source register (R)
-#[register(address = Reg::D6dSrc, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::D6dSrc, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct D6dSrc {
@@ -948,7 +949,7 @@ pub struct D6dSrc {
 /// STATUS_CONTROLLER_MAINPAGE (0x48)
 ///
 /// Sensor hub source register (R)
-#[register(address = Reg::StatusControllerMainpage, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::StatusControllerMainpage, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct StatusControllerMainpage {
@@ -978,7 +979,7 @@ pub struct StatusControllerMainpage {
 /// EMB_FUNC_STATUS_MAINPAGE (0x49)
 ///
 /// Embedded function status register (R)
-#[register(address = Reg::EmbFuncStatusMainpage, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::EmbFuncStatusMainpage, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct EmbFuncStatusMainpage {
@@ -1005,7 +1006,7 @@ pub struct EmbFuncStatusMainpage {
 /// FSM_STATUS_MAINPAGE (0x4A)
 ///
 /// Finite state machine status register (R)
-#[register(address = Reg::FsmStatusMainpage, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::FsmStatusMainpage, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmStatusMainpage {
@@ -1038,7 +1039,7 @@ pub struct FsmStatusMainpage {
 /// MLC_STATUS_MAINPAGE (0x4B)
 ///
 /// Machine learning core status register (R)
-#[register(address = Reg::MlcStatusMainpage, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::MlcStatusMainpage, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct MlcStatusMainpage {
@@ -1071,7 +1072,7 @@ pub struct MlcStatusMainpage {
 /// HG_WAKE_UP_SRC (0x4C)
 ///
 /// High-g wake-up source register (R)
-#[register(address = Reg::HgWakeUpSrc, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::HgWakeUpSrc, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct HgWakeUpSrc {
@@ -1104,7 +1105,7 @@ pub struct HgWakeUpSrc {
 /// CTRL2_XL_HG (0x4D)
 ///
 /// Control register 2 high-g accelerometer (R/W)
-#[register(address = Reg::Ctrl2XlHg, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Ctrl2XlHg, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Ctrl2XlHg {
@@ -1125,7 +1126,7 @@ pub struct Ctrl2XlHg {
 /// CTRL1_XL_HG (0x4E)
 ///
 /// Control register 1 high-g accelerometer (R/W)
-#[register(address = Reg::Ctrl1XlHg, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Ctrl1XlHg, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Ctrl1XlHg {
@@ -1146,7 +1147,7 @@ pub struct Ctrl1XlHg {
 /// INTERNAL_FREQ_FINE (0x4F)
 ///
 /// Internal frequency register (R)
-#[register(address = Reg::InternalFreq, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::InternalFreq, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct InternalFreq {
@@ -1158,7 +1159,7 @@ pub struct InternalFreq {
 /// FUNCTIONS_ENABLE (0x50)
 ///
 /// Enable interrupt functions register (R/W)
-#[register(address = Reg::FunctionsEnable, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::FunctionsEnable, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FunctionsEnable {
@@ -1185,7 +1186,7 @@ pub struct FunctionsEnable {
 /// HG_FUNCTIONS_ENABLE (0x52)
 ///
 /// Enable high-g functions register (R/W)
-#[register(address = Reg::HgFunctionsEnable, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::HgFunctionsEnable, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct HgFunctionsEnable {
@@ -1209,7 +1210,7 @@ pub struct HgFunctionsEnable {
 /// HG_WAKE_UP_THS (0x53)
 ///
 /// High-g wake-up threshold register (R/W)
-#[register(address = Reg::HgWakeUpThs, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::HgWakeUpThs, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct HgWakeUpThs {
@@ -1221,7 +1222,7 @@ pub struct HgWakeUpThs {
 /// INACTIVITY_DUR (0x54)
 ///
 /// Activity/inactivity configuration register (R/W)
-#[register(address = Reg::InactivityDur, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::InactivityDur, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 #[derive(PartialEq)]
@@ -1243,7 +1244,7 @@ pub struct InactivityDur {
 /// INACTIVITY_THS (0x55)
 ///
 /// Activity/inactivity threshold setting register (R/W)
-#[register(address = Reg::InactivityThs, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::InactivityThs, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct InactivityThs {
@@ -1261,7 +1262,7 @@ pub struct InactivityThs {
 /// TAP_CFG0 (0x56)
 ///
 /// Tap configuration register 0 (R/W)
-#[register(address = Reg::TapCfg0, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::TapCfg0, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct TapCfg0 {
@@ -1294,7 +1295,7 @@ pub struct TapCfg0 {
 /// TAP_CFG1 (0x57)
 ///
 /// Tap configuration register 1 (R/W)
-#[register(address = Reg::TapCfg1, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::TapCfg1, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct TapCfg1 {
@@ -1309,7 +1310,7 @@ pub struct TapCfg1 {
 /// TAP_CFG2 (0x58)
 ///
 /// Tap configuration register 2 (R/W)
-#[register(address = Reg::TapCfg2, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::TapCfg2, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct TapCfg2 {
@@ -1324,7 +1325,7 @@ pub struct TapCfg2 {
 /// TAP_THS_6D (0x59)
 ///
 /// Portrait/landscape position and tap function threshold register (R/W)
-#[register(address = Reg::TapThs6d, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::TapThs6d, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct TapThs6d {
@@ -1342,7 +1343,7 @@ pub struct TapThs6d {
 /// TAP_DUR (0x5A)
 ///
 /// Tap recognition function setting register (R/W)
-#[register(address = Reg::TapDur, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::TapDur, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct TapDur {
@@ -1360,7 +1361,7 @@ pub struct TapDur {
 /// WAKE_UP_THS (0x5B)
 ///
 /// Single/double-tap selection and wake-up configuration (R/W)
-#[register(address = Reg::WakeUpThs, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::WakeUpThs, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct WakeUpThs {
@@ -1378,7 +1379,7 @@ pub struct WakeUpThs {
 /// WAKE_UP_DUR (0x5C)
 ///
 /// Free-fall, wake-up, and sleep mode functions duration setting register (R/W)
-#[register(address = Reg::WakeUpDur, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::WakeUpDur, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct WakeUpDur {
@@ -1399,7 +1400,7 @@ pub struct WakeUpDur {
 /// FREE_FALL (0x5D)
 ///
 /// Free-fall function duration setting register (R/W)
-#[register(address = Reg::FreeFall, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::FreeFall, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FreeFall {
@@ -1414,7 +1415,7 @@ pub struct FreeFall {
 /// MD1_CFG (0x5E)
 ///
 /// Functions routing to INT1 pin register (R/W)
-#[register(address = Reg::Md1Cfg, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Md1Cfg, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Md1Cfg {
@@ -1447,7 +1448,7 @@ pub struct Md1Cfg {
 /// MD2_CFG (0x5F)
 ///
 /// Functions routing to INT2 pin register (R/W)
-#[register(address = Reg::Md2Cfg, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::Md2Cfg, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Md2Cfg {
@@ -1480,7 +1481,7 @@ pub struct Md2Cfg {
 /// HAODR_CFG (0x62)
 ///
 /// HAODR data rate configuration register (R/W)
-#[register(address = Reg::HaodrCfg, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::HaodrCfg, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct HaodrCfg {
@@ -1495,7 +1496,7 @@ pub struct HaodrCfg {
 /// EMB_FUNC_CFG (0x63)
 ///
 /// Embedded functions configuration register (R/W)
-#[register(address = Reg::EmbFuncCfg, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::EmbFuncCfg, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct EmbFuncCfg {
@@ -1522,7 +1523,7 @@ pub struct EmbFuncCfg {
 /// UI_HANDSHAKE_CTRL (0x64)
 ///
 /// Control register (UI side) for UI / IF2 shared registers (R/W)
-#[register(address = Reg::UiHandshakeCtrl, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::UiHandshakeCtrl, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct UiHandshakeCtrl {
@@ -1542,7 +1543,7 @@ pub struct UiHandshakeCtrl {
 /// UI / IF2 shared register 0 (R/W).
 /// Volatile byte used as a contact point between primary and secondary interface hosts.
 /// Access is mutually exclusive and managed via UI_SHARED_ACK/REQ and IF2_SHARED_ACK/REQ bits.
-#[register(address = Reg::UiIf2Shared0, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::UiIf2Shared0, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct UiIf2Shared0 {
@@ -1556,7 +1557,7 @@ pub struct UiIf2Shared0 {
 /// UI / IF2 shared register 1 (R/W).
 /// Volatile byte used as a contact point between primary and secondary interface hosts.
 /// Access is mutually exclusive and managed via UI_SHARED_ACK/REQ and IF2_SHARED_ACK/REQ bits.
-#[register(address = Reg::UiIf2Shared1, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::UiIf2Shared1, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct UiIf2Shared1 {
@@ -1570,7 +1571,7 @@ pub struct UiIf2Shared1 {
 /// UI / IF2 shared register 2 (R/W).
 /// Volatile byte used as a contact point between primary and secondary interface hosts.
 /// Access is mutually exclusive and managed via UI_SHARED_ACK/REQ and IF2_SHARED_ACK/REQ bits.
-#[register(address = Reg::UiIf2Shared2, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::UiIf2Shared2, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct UiIf2Shared2 {
@@ -1584,7 +1585,7 @@ pub struct UiIf2Shared2 {
 /// UI / IF2 shared register 3 (R/W).
 /// Volatile byte used as a contact point between primary and secondary interface hosts.
 /// Access is mutually exclusive and managed via UI_SHARED_ACK/REQ and IF2_SHARED_ACK/REQ bits.
-#[register(address = Reg::UiIf2Shared3, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::UiIf2Shared3, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct UiIf2Shared3 {
@@ -1598,7 +1599,7 @@ pub struct UiIf2Shared3 {
 /// UI / IF2 shared register 4 (R/W).
 /// Volatile byte used as a contact point between primary and secondary interface hosts.
 /// Access is mutually exclusive and managed via UI_SHARED_ACK/REQ and IF2_SHARED_ACK/REQ bits.
-#[register(address = Reg::UiIf2Shared4, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::UiIf2Shared4, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct UiIf2Shared4 {
@@ -1612,7 +1613,7 @@ pub struct UiIf2Shared4 {
 /// UI / IF2 shared register 5 (R/W).
 /// Volatile byte used as a contact point between primary and secondary interface hosts.
 /// Access is mutually exclusive and managed via UI_SHARED_ACK/REQ and IF2_SHARED_ACK/REQ bits.
-#[register(address = Reg::UiIf2Shared5, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::UiIf2Shared5, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct UiIf2Shared5 {
@@ -1625,7 +1626,7 @@ pub struct UiIf2Shared5 {
 ///
 /// Gyroscope EIS channel control register (R/W).
 /// Controls full scale, LPF bandwidth, output routing, and ODR for EIS gyroscope channel.
-#[register(address = Reg::CtrlEis, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::CtrlEis, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct CtrlEis {
@@ -1653,7 +1654,7 @@ pub struct CtrlEis {
 /// High-g accelerometer (X, Y, Z)-axis user offset correction (R/W).
 /// Offset added internally to measured acceleration on (X, Y, Z)-axis.
 /// Expressed as 8-bit two's complement; weight 0.25 g/LSb for FS ≤ ±256g, 0.33 g/LSb for ±320g.
-#[named_register(address = Reg::XlHgXOfsUsr, access_type = Lsm6dsv320x, generics = 2)]
+#[named_register(address = Reg::XlHgXOfsUsr, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[derive(Default)]
 pub struct XlHgXYZOfsUsr {
     pub x: i8,
@@ -1667,7 +1668,7 @@ pub struct XlHgXYZOfsUsr {
 /// High-g accelerometer Y-axis user offset correction (R/W).
 /// Offset added internally to measured acceleration on Y-axis.
 /// Expressed as 8-bit two's complement; weight 0.25 g/LSb for FS ≤ ±256g, 0.33 g/LSb for ±320g.
-#[register(address = Reg::XlHgYOfsUsr, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::XlHgYOfsUsr, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct XlHgYOfsUsr {
@@ -1681,7 +1682,7 @@ pub struct XlHgYOfsUsr {
 /// High-g accelerometer Z-axis user offset correction (R/W).
 /// Offset added internally to measured acceleration on Z-axis.
 /// Expressed as 8-bit two's complement; weight 0.25 g/LSb for FS ≤ ±256g, 0.33 g/LSb for ±320g.
-#[register(address = Reg::XlHgZOfsUsr, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::XlHgZOfsUsr, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct XlHgZOfsUsr {
@@ -1694,7 +1695,7 @@ pub struct XlHgZOfsUsr {
 ///
 /// OIS interrupt configuration register (R/W).
 /// Controls OIS DRDY masking, clamp disable during self-test, and INT2 DRDY routing.
-#[register(address = Reg::UiIntOis, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::UiIntOis, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct UiIntOis {
@@ -1719,7 +1720,7 @@ pub struct UiIntOis {
 ///
 /// OIS configuration register 1 (R/W).
 /// Controls auxiliary SPI mode, OIS accelerometer and gyroscope enable, and simulation mode.
-#[register(address = Reg::UiCtrl1Ois, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::UiCtrl1Ois, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct UiCtrl1Ois {
@@ -1747,7 +1748,7 @@ pub struct UiCtrl1Ois {
 ///
 /// OIS configuration register 2 (R/W).
 /// Controls gyroscope OIS full scale and LPF1 bandwidth selection.
-#[register(address = Reg::UiCtrl2Ois, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::UiCtrl2Ois, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct UiCtrl2Ois {
@@ -1767,7 +1768,7 @@ pub struct UiCtrl2Ois {
 ///
 /// OIS configuration register 3 (R/W).
 /// Controls accelerometer OIS full scale and LPF bandwidth selection.
-#[register(address = Reg::UiCtrl3Ois, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::UiCtrl3Ois, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct UiCtrl3Ois {
@@ -1791,7 +1792,7 @@ pub struct UiCtrl3Ois {
 /// Accelerometer X-axis user offset correction (R/W).
 /// Offset added internally to measured acceleration on X-axis.
 /// Expressed as 8-bit two's complement; weight depends on USR_OFF_W in CTRL9.
-#[register(address = Reg::XOfsUsr, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::XOfsUsr, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct XOfsUsr {
@@ -1805,7 +1806,7 @@ pub struct XOfsUsr {
 /// Accelerometer Y-axis user offset correction (R/W).
 /// Offset added internally to measured acceleration on Y-axis.
 /// Expressed as 8-bit two's complement; weight depends on USR_OFF_W in CTRL9.
-#[register(address = Reg::YOfsUsr, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::YOfsUsr, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct YOfsUsr {
@@ -1819,7 +1820,7 @@ pub struct YOfsUsr {
 /// Accelerometer Z-axis user offset correction (R/W).
 /// Offset added internally to measured acceleration on Z-axis.
 /// Expressed as 8-bit two's complement; weight depends on USR_OFF_W in CTRL9.
-#[register(address = Reg::ZOfsUsr, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::ZOfsUsr, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct ZOfsUsr {
@@ -1832,7 +1833,7 @@ pub struct ZOfsUsr {
 ///
 /// FIFO tag register (R).
 /// Identifies sensor source and tag count for FIFO data output.
-#[register(address = Reg::FifoDataOutTag, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::FifoDataOutTag, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FifoDataOutTag {
@@ -1850,7 +1851,7 @@ pub struct FifoDataOutTag {
 /// FIFO_DATA_OUT_X_L - FIFO_DATA_OUT_Z_H (0x79 - 0x7E)
 ///
 /// FIFO data output X, Y, Z (R)
-#[register(address = Reg::FifoDataOutXL, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = Reg::FifoDataOutXL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 pub struct FifoDataOutXYZ(pub [u8; 6]);
 
 #[derive(Debug, PartialEq, Clone)]

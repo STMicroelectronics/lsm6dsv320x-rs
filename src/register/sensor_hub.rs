@@ -1,10 +1,12 @@
-use crate::Error;
-use crate::register::SensorHubState;
+use super::super::{
+    BusOperation, DelayNs, Error, Lsm6dsv320x, RegisterOperation, SensorOperation, bisync,
+    register::SensorHubBank,
+};
+
 use bitfield_struct::bitfield;
+
 use derive_more::TryFrom;
-use embedded_hal::delay::DelayNs;
 use st_mem_bank_macro::register;
-use st_mems_bus::BusOperation;
 
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq)]
@@ -47,7 +49,7 @@ pub enum SensHubReg {
 /// SENSOR_HUB_1 (0x02)
 ///
 /// First byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub1, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub1, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub1 {
@@ -58,7 +60,7 @@ pub struct SensorHub1 {
 /// SENSOR_HUB_2 (0x03)
 ///
 /// Second byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub2, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub2, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub2 {
@@ -69,7 +71,7 @@ pub struct SensorHub2 {
 /// SENSOR_HUB_3 (0x04)
 ///
 /// Third byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub3, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub3, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub3 {
@@ -80,7 +82,7 @@ pub struct SensorHub3 {
 /// SENSOR_HUB_4 (0x05)
 ///
 /// Fourth byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub4, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub4, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub4 {
@@ -91,7 +93,7 @@ pub struct SensorHub4 {
 /// SENSOR_HUB_5 (0x06)
 ///
 /// Fifth byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub5, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub5, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub5 {
@@ -102,7 +104,7 @@ pub struct SensorHub5 {
 /// SENSOR_HUB_6 (0x07)
 ///
 /// Sixth byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub6, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub6, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub6 {
@@ -113,7 +115,7 @@ pub struct SensorHub6 {
 /// SENSOR_HUB_7 (0x08)
 ///
 /// Seventh byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub7, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub7, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub7 {
@@ -124,7 +126,7 @@ pub struct SensorHub7 {
 /// SENSOR_HUB_8 (0x09)
 ///
 /// Eighth byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub8, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub8, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub8 {
@@ -135,7 +137,7 @@ pub struct SensorHub8 {
 /// SENSOR_HUB_9 (0x0A)
 ///
 /// Ninth byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub9, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub9, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub9 {
@@ -146,7 +148,7 @@ pub struct SensorHub9 {
 /// SENSOR_HUB_10 (0x0B)
 ///
 /// Tenth byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub10, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub10, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub10 {
@@ -157,7 +159,7 @@ pub struct SensorHub10 {
 /// SENSOR_HUB_11 (0x0C)
 ///
 /// Eleventh byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub11, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub11, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub11 {
@@ -168,7 +170,7 @@ pub struct SensorHub11 {
 /// SENSOR_HUB_12 (0x0D)
 ///
 /// Twelfth byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub12, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub12, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub12 {
@@ -179,7 +181,7 @@ pub struct SensorHub12 {
 /// SENSOR_HUB_13 (0x0E)
 ///
 /// Thirteenth byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub13, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub13, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub13 {
@@ -190,7 +192,7 @@ pub struct SensorHub13 {
 /// SENSOR_HUB_14 (0x0F)
 ///
 /// Fourteenth byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub14, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub14, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub14 {
@@ -201,7 +203,7 @@ pub struct SensorHub14 {
 /// SENSOR_HUB_15 (0x10)
 ///
 /// Fifteenth byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub15, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub15, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub15 {
@@ -212,7 +214,7 @@ pub struct SensorHub15 {
 /// SENSOR_HUB_16 (0x11)
 ///
 /// Sixteenth byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub16, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub16, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub16 {
@@ -223,7 +225,7 @@ pub struct SensorHub16 {
 /// SENSOR_HUB_17 (0x12)
 ///
 /// Seventeenth byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub17, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub17, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub17 {
@@ -234,7 +236,7 @@ pub struct SensorHub17 {
 /// SENSOR_HUB_18 (0x13)
 ///
 /// Eighteenth byte associated to external sensors (R).
-#[register(address = SensHubReg::SensorHub18, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::SensorHub18, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct SensorHub18 {
@@ -245,7 +247,7 @@ pub struct SensorHub18 {
 /// CONTROLLER_CONFIG (0x14)
 ///
 /// Sensor hub controller configuration register (R/W).
-#[register(address = SensHubReg::ControllerConfig, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::ControllerConfig, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct ControllerConfig {
@@ -286,7 +288,7 @@ pub struct TgtAdd {
 /// TGT0_ADD (0x15)
 ///
 /// I2C target address of first external sensor (sensor 0) (R/W).
-#[register(address = SensHubReg::Tgt0Add, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::Tgt0Add, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Tgt0Add {
@@ -301,7 +303,7 @@ pub struct Tgt0Add {
 /// TGT0_SUBADD (0x16)
 ///
 /// Address of register on first external sensor (sensor 0) (R/W).
-#[register(address = SensHubReg::Tgt0Subadd, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::Tgt0Subadd, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Tgt0Subadd {
@@ -313,7 +315,7 @@ pub struct Tgt0Subadd {
 /// TGT0_CONFIG (0x17)
 ///
 /// First external sensor (sensor 0) configuration and sensor hub settings register (R/W).
-#[register(address = SensHubReg::Tgt0Config, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::Tgt0Config, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Tgt0Config {
@@ -334,7 +336,7 @@ pub struct Tgt0Config {
 /// TGT1_ADD (0x18)
 ///
 /// I2C target address of the second external sensor (sensor 1) (R/W).
-#[register(address = SensHubReg::Tgt1Add, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::Tgt1Add, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Tgt1Add {
@@ -349,7 +351,7 @@ pub struct Tgt1Add {
 /// TGT1_SUBADD (0x19)
 ///
 /// Address of register on the second external sensor (sensor 1) (R/W).
-#[register(address = SensHubReg::Tgt1Subadd, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::Tgt1Subadd, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Tgt1Subadd {
@@ -361,7 +363,7 @@ pub struct Tgt1Subadd {
 /// TGT1_CONFIG (0x1A)
 ///
 /// Second external sensor (sensor 1) configuration register (R/W).
-#[register(address = SensHubReg::Tgt1Config, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::Tgt1Config, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Tgt1Config {
@@ -379,7 +381,7 @@ pub struct Tgt1Config {
 /// TGT2_ADD (0x1B)
 ///
 /// I2C target address of the third external sensor (sensor 2) (R/W).
-#[register(address = SensHubReg::Tgt2Add, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::Tgt2Add, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Tgt2Add {
@@ -394,7 +396,7 @@ pub struct Tgt2Add {
 /// TGT2_SUBADD (0x1C)
 ///
 /// Address of register on the third external sensor (sensor 2) (R/W).
-#[register(address = SensHubReg::Tgt2Subadd, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::Tgt2Subadd, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Tgt2Subadd {
@@ -406,7 +408,7 @@ pub struct Tgt2Subadd {
 /// TGT2_CONFIG (0x1D)
 ///
 /// Third external sensor (sensor 2) configuration register (R/W).
-#[register(address = SensHubReg::Tgt2Config, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::Tgt2Config, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Tgt2Config {
@@ -424,7 +426,7 @@ pub struct Tgt2Config {
 /// TGT3_ADD (0x1E)
 ///
 /// I2C target address of the fourth external sensor (sensor 3) (R/W).
-#[register(address = SensHubReg::Tgt3Add, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::Tgt3Add, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Tgt3Add {
@@ -439,7 +441,7 @@ pub struct Tgt3Add {
 /// TGT3_SUBADD (0x1F)
 ///
 /// Address of register on the fourth external sensor (sensor 3) (R/W).
-#[register(address = SensHubReg::Tgt3Subadd, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::Tgt3Subadd, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Tgt3Subadd {
@@ -451,7 +453,7 @@ pub struct Tgt3Subadd {
 /// TGT3_CONFIG (0x20)
 ///
 /// Fourth external sensor (sensor 3) configuration register (R/W).
-#[register(address = SensHubReg::Tgt3Config, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::Tgt3Config, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Tgt3Config {
@@ -469,7 +471,7 @@ pub struct Tgt3Config {
 /// DATAWRITE_TGT0 (0x21)
 ///
 /// Data to be written into the target 0 device (R/W).
-#[register(address = SensHubReg::DatawriteTgt0, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::DatawriteTgt0, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct DatawriteTgt0 {
@@ -480,7 +482,7 @@ pub struct DatawriteTgt0 {
 /// STATUS_CONTROLLER (0x22)
 ///
 /// Sensor hub source register (R).
-#[register(address = SensHubReg::StatusController, access_type = SensorHubState, generics = 2)]
+#[register(address = SensHubReg::StatusController, access_type = "Lsm6dsv320x<B, T, SensorHubBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct StatusController {

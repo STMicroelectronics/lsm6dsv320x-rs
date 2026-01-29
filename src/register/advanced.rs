@@ -1,10 +1,12 @@
-use crate::Error;
-use crate::Lsm6dsv320x;
+use super::super::{
+    BusOperation, DelayNs, EmbAdvFunctions, Error, Lsm6dsv320x, RegisterOperation, bisync,
+    register::MainBank,
+};
+
 use bitfield_struct::bitfield;
+
 use derive_more::TryFrom;
-use embedded_hal::delay::DelayNs;
 use st_mem_bank_macro::{MultiRegister, adv_register};
-use st_mems_bus::{BusOperation, EmbAdvFunctions};
 
 #[repr(u16)]
 #[derive(Clone, Copy, PartialEq)]
@@ -73,13 +75,13 @@ pub enum EmbAdv2Reg {
 ///
 /// External sensor sensitivity value for FSM (R/W).
 /// 16-bit half-precision floating-point format.
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtSensitivityL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtSensitivityL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 pub struct FsmExtSensitivity(pub u16);
 
 /// FSM_EXT_SENSITIVITY_L (0xBA)
 ///
 /// Low byte of external sensor sensitivity (R).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtSensitivityL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtSensitivityL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtSensitivityL {
@@ -90,7 +92,7 @@ pub struct FsmExtSensitivityL {
 /// FSM_EXT_SENSITIVITY_H (0xBB)
 ///
 /// High byte of external sensor sensitivity (R).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtSensitivityH, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtSensitivityH, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtSensitivityH {
@@ -102,7 +104,7 @@ pub struct FsmExtSensitivityH {
 ///
 /// Low byte of external sensor X-axis offset (R/W).
 /// 16-bit half-precision floating-point format.
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtOffxL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtOffxL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtOffxL {
@@ -113,7 +115,7 @@ pub struct FsmExtOffxL {
 /// FSM_EXT_OFFX_H (0xC1)
 ///
 /// High byte of external sensor X-axis offset (R/W).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtOffxH, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtOffxH, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtOffxH {
@@ -125,7 +127,7 @@ pub struct FsmExtOffxH {
 ///
 /// Low byte of external sensor Y-axis offset (R/W).
 /// 16-bit half-precision floating-point format.
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtOffyL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtOffyL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtOffyL {
@@ -136,7 +138,7 @@ pub struct FsmExtOffyL {
 /// FSM_EXT_OFFY_H (0xC3)
 ///
 /// High byte of external sensor Y-axis offset (R/W).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtOffyH, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtOffyH, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtOffyH {
@@ -148,7 +150,7 @@ pub struct FsmExtOffyH {
 ///
 /// Low byte of external sensor Z-axis offset (R/W).
 /// 16-bit half-precision floating-point format.
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtOffzL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtOffzL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtOffzL {
@@ -159,7 +161,7 @@ pub struct FsmExtOffzL {
 /// FSM_EXT_OFFZ_H (0xC5)
 ///
 /// High byte of external sensor Z-axis offset (R/W).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtOffzH, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtOffzH, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtOffzH {
@@ -171,7 +173,7 @@ pub struct FsmExtOffzH {
 ///
 /// Low byte of external sensor transformation matrix row 1 column 1 coefficient (R/W).
 /// 16-bit half-precision floating-point format.
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixXxL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixXxL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixXxL {
@@ -182,7 +184,7 @@ pub struct FsmExtMatrixXxL {
 /// FSM_EXT_MATRIX_XX_H (0xC7)
 ///
 /// High byte of external sensor transformation matrix row 1 column 1 coefficient (R/W).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixXxH, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixXxH, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixXxH {
@@ -193,7 +195,7 @@ pub struct FsmExtMatrixXxH {
 /// FSM_EXT_MATRIX_XY_L (0xC8)
 ///
 /// Low byte of external sensor transformation matrix row 1 column 2 coefficient (R/W).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixXyL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixXyL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixXyL {
@@ -204,7 +206,7 @@ pub struct FsmExtMatrixXyL {
 /// FSM_EXT_MATRIX_XY_H (0xC9)
 ///
 /// High byte of external sensor transformation matrix row 1 column 2 coefficient (R/W).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixXyH, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixXyH, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixXyH {
@@ -215,7 +217,7 @@ pub struct FsmExtMatrixXyH {
 /// FSM_EXT_MATRIX_XZ_L (0xCA)
 ///
 /// Low byte of external sensor transformation matrix row 1 column 3 coefficient (R/W).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixXzL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixXzL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixXzL {
@@ -226,7 +228,7 @@ pub struct FsmExtMatrixXzL {
 /// FSM_EXT_MATRIX_XZ_H (0xCB)
 ///
 /// High byte of external sensor transformation matrix row 1 column 3 coefficient (R/W).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixXzH, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixXzH, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixXzH {
@@ -237,7 +239,7 @@ pub struct FsmExtMatrixXzH {
 /// FSM_EXT_MATRIX_YY_L (0xCC)
 ///
 /// Low byte of external sensor transformation matrix row 2 column 2 coefficient (R/W).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixYyL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixYyL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixYyL {
@@ -248,7 +250,7 @@ pub struct FsmExtMatrixYyL {
 /// FSM_EXT_MATRIX_YY_H (0xCD)
 ///
 /// High byte of external sensor transformation matrix row 2 column 2 coefficient (R/W).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixYyH, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixYyH, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixYyH {
@@ -259,7 +261,7 @@ pub struct FsmExtMatrixYyH {
 /// FSM_EXT_MATRIX_YZ_L (0xCE)
 ///
 /// Low byte of external sensor transformation matrix row 2 column 3 coefficient (R/W).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixYzL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixYzL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixYzL {
@@ -270,7 +272,7 @@ pub struct FsmExtMatrixYzL {
 /// FSM_EXT_MATRIX_YZ_H (0xCF)
 ///
 /// High byte of external sensor transformation matrix row 2 column 3 coefficient (R/W).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixYzH, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixYzH, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixYzH {
@@ -281,7 +283,7 @@ pub struct FsmExtMatrixYzH {
 /// FSM_EXT_MATRIX_ZZ_L (0xD0)
 ///
 /// Low byte of external sensor transformation matrix row 3 column 3 coefficient (R/W).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixZzL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixZzL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixZzL {
@@ -292,7 +294,7 @@ pub struct FsmExtMatrixZzL {
 /// FSM_EXT_MATRIX_ZZ_H (0xD1)
 ///
 /// High byte of external sensor transformation matrix row 3 column 3 coefficient (R/W).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixZzH, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::FsmExtMatrixZzH, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmExtMatrixZzH {
@@ -304,7 +306,7 @@ pub struct FsmExtMatrixZzH {
 ///
 /// External sensor coordinates rotation register (R/W).
 /// Controls Z and Y axes rotation to align external sensor to accelerometer/gyroscope axes.
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::ExtCfgA, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::ExtCfgA, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct ExtCfgA {
@@ -327,7 +329,7 @@ pub struct ExtCfgA {
 /// External sensor X-axis coordinates rotation register (R/W).
 /// Controls X-axis rotation to align external sensor to accelerometer/gyroscope axes.
 /// Default: 010 (X = X).
-#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::ExtCfgB, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_0, address = EmbAdv0Reg::ExtCfgB, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct ExtCfgB {
@@ -344,7 +346,7 @@ pub struct ExtCfgB {
 /// High-g accelerometer sensitivity value register for FSM and MLC (R/W).
 /// 16-bit half-precision floating-point format.
 /// Default: 0x051F (expressed in hundreds of g).
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::XlHgSensitivityL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::XlHgSensitivityL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u16, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u16, order = Lsb))]
 pub struct XlHgSensitivity {
@@ -356,13 +358,13 @@ pub struct XlHgSensitivity {
 ///
 /// FSM long counter timeout value (R/W).
 /// 16-bit unsigned integer. When long counter reaches this value, FSM generates interrupt.
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::FsmLcTimeoutL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::FsmLcTimeoutL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 pub struct FsmLcTimeout(pub u16);
 
 /// FSM_LC_TIMEOUT_L (0x7A)
 ///
 /// Low byte of FSM long counter timeout value (R).
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::FsmLcTimeoutL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::FsmLcTimeoutL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmLcTimeoutL {
@@ -373,7 +375,7 @@ pub struct FsmLcTimeoutL {
 /// FSM_LC_TIMEOUT_H (0x7B)
 ///
 /// High byte of FSM long counter timeout value (R).
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::FsmLcTimeoutH, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::FsmLcTimeoutH, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmLcTimeoutH {
@@ -385,7 +387,7 @@ pub struct FsmLcTimeoutH {
 ///
 /// Number of FSM programs (R/W).
 /// Must be less than or equal to 8. Default: 0.
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::FsmPrograms, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::FsmPrograms, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmPrograms {
@@ -397,13 +399,13 @@ pub struct FsmPrograms {
 ///
 /// FSM start address register (R/W).
 /// First available address is 0x2F0.
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::FsmStartAddL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::FsmStartAddL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 pub struct FsmStartAdd(pub u16);
 
 /// FSM_START_ADD_L (0x7E)
 ///
 /// Low byte of FSM start address (R).
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::FsmStartAddL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::FsmStartAddL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmStartAddL {
@@ -414,7 +416,7 @@ pub struct FsmStartAddL {
 /// FSM_START_ADD_H (0x7F)
 ///
 /// High byte of FSM start address (R).
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::FsmStartAddH, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::FsmStartAddH, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct FsmStartAddH {
@@ -425,7 +427,7 @@ pub struct FsmStartAddH {
 /// PEDO_CMD_REG (0x83)
 ///
 /// Pedometer configuration register (R/W).
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::PedoCmdReg, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::PedoCmdReg, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct PedoCmdReg {
@@ -448,7 +450,7 @@ pub struct PedoCmdReg {
 /// Pedometer debounce configuration register (R/W).
 /// Minimum number of steps to increment the step counter (debounce).
 /// Default: 0x0A.
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::PedoDebStepsConf, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::PedoDebStepsConf, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct PedoDebStepsConf {
@@ -460,13 +462,13 @@ pub struct PedoDebStepsConf {
 ///
 /// Time period register for step detection on delta time (R/W).
 /// 16-bit value, 1 LSB = 6.4 ms.
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::PedoScDeltatL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::PedoScDeltatL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 pub struct PedoScDeltat(pub u16);
 
 /// PEDO_SC_DELTAT_L (0xD0)
 ///
 /// Low byte of time period for step detection on delta time.
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::PedoScDeltatL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::PedoScDeltatL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct PedoScDeltatL {
@@ -477,7 +479,7 @@ pub struct PedoScDeltatL {
 /// PEDO_SC_DELTAT_H (0xD1)
 ///
 /// High byte of time period for step detection on delta time.
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::PedoScDeltatH, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::PedoScDeltatH, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct PedoScDeltatH {
@@ -490,7 +492,7 @@ pub struct PedoScDeltatH {
 /// External sensor sensitivity value register for machine learning core (R/W).
 /// 16-bit half-precision floating-point format.
 /// Default: 0x3C00 (1 gauss/LSB).
-#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::MlcExtSensitivityL, access_type = Lsm6dsv320x, generics = 2)]
+#[adv_register(base_address =  AdvPage::_1, address = EmbAdv1Reg::MlcExtSensitivityL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u16, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u16, order = Lsb))]
 pub struct MlcExtSensitivity {

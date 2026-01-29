@@ -1,6 +1,8 @@
-pub use crate::register::advanced::*;
-pub use crate::register::embedded::*;
-pub use crate::register::if2::*;
-pub use crate::register::main::*;
-pub use crate::register::sensor_hub::*;
-pub use crate::register::*;
+pub use super::register;
+
+pub use register::advanced::*;
+pub use register::embedded::*;
+pub use register::if2::*;
+pub use register::main::*;
+pub use register::sensor_hub::*;
+pub use register::*;

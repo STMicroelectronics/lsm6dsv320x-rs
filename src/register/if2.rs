@@ -1,9 +1,11 @@
-use crate::Error;
-use crate::Lsm6dsv320x;
+use super::super::{
+    BusOperation, DelayNs, Error, Lsm6dsv320x, RegisterOperation, SensorOperation, bisync,
+    register::MainBank,
+};
+
 use bitfield_struct::bitfield;
-use embedded_hal::delay::DelayNs;
+
 use st_mem_bank_macro::{named_register, register};
-use st_mems_bus::BusOperation;
 
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq)]
@@ -35,7 +37,7 @@ pub enum If2Reg {
 ///
 /// Read-only device identification register for auxiliary interface.
 /// Fixed value: 0x73.
-#[register(address = If2Reg::WhoAmI, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = If2Reg::WhoAmI, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct If2WhoAmI {
@@ -48,7 +50,7 @@ pub struct If2WhoAmI {
 ///
 /// Status register for OIS auxiliary interface (read-only).
 /// Indicates data availability and gyro settling status.
-#[register(address = If2Reg::StatusRegOis, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = If2Reg::StatusRegOis, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct If2StatusRegOis {
@@ -70,7 +72,7 @@ pub struct If2StatusRegOis {
 ///
 /// Lower byte of temperature sensor output (read-only).
 /// Combined with IF2_OUT_TEMP_H to form 16-bit two's complement temperature data.
-#[register(address = If2Reg::OutTempL, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = If2Reg::OutTempL, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct If2OutTempL {
@@ -83,7 +85,7 @@ pub struct If2OutTempL {
 ///
 /// Higher byte of temperature sensor output (read-only).
 /// Combined with IF2_OUT_TEMP_L to form 16-bit two's complement temperature data.
-#[register(address = If2Reg::OutTempH, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = If2Reg::OutTempH, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct If2OutTempH {
@@ -96,7 +98,7 @@ pub struct If2OutTempH {
 ///
 /// 16-bit two's complement angular rate output for OIS gyroscope axes (X, Y, Z).
 /// Data according to gyroscope full-scale and 7.68 kHz ODR settings.
-#[named_register(address = If2Reg::OutxLGOis, access_type = Lsm6dsv320x, generics = 2)]
+#[named_register(address = If2Reg::OutxLGOis, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 pub struct If2OutXYZGOIS {
     pub x: i16,
     pub y: i16,
@@ -107,7 +109,7 @@ pub struct If2OutXYZGOIS {
 ///
 /// 16-bit two's complement linear acceleration for OIS accelerometer axes (X, Y, Z).
 /// Data are according to the accelerometer full-scale and ODR (7.68 kHz) settings.
-#[named_register(address = If2Reg::OutxLGOis, access_type = Lsm6dsv320x, generics = 2)]
+#[named_register(address = If2Reg::OutxLGOis, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 pub struct If2OutXYZAOIS {
     pub x: i16,
     pub y: i16,
@@ -118,7 +120,7 @@ pub struct If2OutXYZAOIS {
 ///
 /// Control register for handshake between auxiliary (IF2) and primary interfaces (R/W).
 /// Manages shared register access arbitration.
-#[register(address = If2Reg::HandshakeCtrl, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = If2Reg::HandshakeCtrl, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct If2HandshakeCtrl {
@@ -137,7 +139,7 @@ pub struct If2HandshakeCtrl {
 ///
 /// OIS interrupt configuration and self-test register for auxiliary interface.
 /// Read-only when primary interface has full control.
-#[register(address = If2Reg::IntOis, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = If2Reg::IntOis, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct If2IntOis {
@@ -165,7 +167,7 @@ pub struct If2IntOis {
 ///
 /// OIS configuration register 1 for auxiliary interface.
 /// Controls SPI mode, OIS accelerometer and gyroscope enable, and simulation mode.
-#[register(address = If2Reg::Ctrl1Ois, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = If2Reg::Ctrl1Ois, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct If2Ctrl1Ois {
@@ -193,7 +195,7 @@ pub struct If2Ctrl1Ois {
 ///
 /// OIS configuration register 2 (R/W).
 /// Controls gyroscope OIS full-scale and LPF1 bandwidth selection.
-#[register(address = If2Reg::Ctrl2Ois, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = If2Reg::Ctrl2Ois, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct If2Ctrl2Ois {
@@ -213,7 +215,7 @@ pub struct If2Ctrl2Ois {
 ///
 /// OIS configuration register 3 (R/W).
 /// Controls accelerometer OIS full-scale and LPF bandwidth selection.
-#[register(address = If2Reg::Ctrl3Ois, access_type = Lsm6dsv320x, generics = 2)]
+#[register(address = If2Reg::Ctrl3Ois, access_type = "Lsm6dsv320x<B, T, MainBank>")]
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct If2Ctrl3Ois {
