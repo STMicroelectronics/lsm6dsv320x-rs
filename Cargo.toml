@@ -13,6 +13,9 @@ description = """
     gyroscope, and integrated FSM/MLC modules for AI and IoT applications.
 """
 
+[lib]
+doctest = false
+
 [dependencies]
 bisync = "0.3.0"
 embedded-hal = "1.0.0"
