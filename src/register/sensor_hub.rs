@@ -526,14 +526,14 @@ pub struct ShCfgRead {
 #[derive(Clone, Copy, PartialEq, Default, TryFrom)]
 #[try_from(repr)]
 pub enum ShTargetConnected {
-    /// No external sensors connected.
+    /// One external sensor connected.
     #[default]
     _0 = 0x0,
-    /// One external sensor connected.
-    _01 = 0x1,
     /// Two external sensors connected.
-    _012 = 0x2,
+    _01 = 0x1,
     /// Three external sensors connected.
+    _012 = 0x2,
+    /// Four external sensors connected.
     _0123 = 0x3,
 }
 
