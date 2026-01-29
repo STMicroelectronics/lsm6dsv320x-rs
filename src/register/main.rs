@@ -1795,7 +1795,7 @@ pub struct UiCtrl3Ois {
 pub struct XOfsUsr {
     /// 8-bit user offset for accelerometer X-axis.
     #[bits(8)]
-    pub x_ofs_usr: u8,
+    pub x_ofs_usr: i8,
 }
 
 /// Y_OFS_USR (0x74)
@@ -1809,7 +1809,7 @@ pub struct XOfsUsr {
 pub struct YOfsUsr {
     /// 8-bit user offset for accelerometer Y-axis.
     #[bits(8)]
-    pub y_ofs_usr: u8,
+    pub y_ofs_usr: i8,
 }
 
 /// Z_OFS_USR (0x75)
@@ -1823,7 +1823,7 @@ pub struct YOfsUsr {
 pub struct ZOfsUsr {
     /// 8-bit user offset for accelerometer Z-axis.
     #[bits(8)]
-    pub z_ofs_usr: u8,
+    pub z_ofs_usr: i8,
 }
 
 /// FIFO_DATA_OUT_TAG (0x78)

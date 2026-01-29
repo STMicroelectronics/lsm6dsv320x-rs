@@ -267,12 +267,16 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     }
 
     /// Set the accelerometer user offset correction values (in mg).
+    /// Value ranges depend on the USR_OFF_W bit in CTRL9:
+    /// - If USR_OFF_W = 1: range is ±15.875 mg with 0.125 mg precision.
+    /// - If USR_OFF_W = 0: range is ±0.9921875 mg with 0.0078125 mg precision.
+    /// The USR_OFF_W bit is automatically enabled based on the input values (precision is shared across
+    /// all axes).
     pub fn xl_offset_mg_set(&mut self, val: XlOffsetMg) -> Result<(), Error<B::Error>> {
         let mut z_ofs_usr = ZOfsUsr::read(self)?;
         let mut y_ofs_usr = YOfsUsr::read(self)?;
         let mut x_ofs_usr = XOfsUsr::read(self)?;
-
-        let mut ctrl9 = Ctrl9::new();
+        let mut ctrl9 = Ctrl9::read(self)?;
 
         if val.x_mg < (0.0078125 * 127.0)
             && val.x_mg > (0.0078125 * -127.0)
@@ -284,13 +288,13 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
             ctrl9.set_usr_off_w(0);
 
             let tmp = val.z_mg / 0.0078125;
-            z_ofs_usr.set_z_ofs_usr(tmp as u8);
+            z_ofs_usr.set_z_ofs_usr(tmp as i8);
 
             let tmp = val.y_mg / 0.0078125;
-            y_ofs_usr.set_y_ofs_usr(tmp as u8);
+            y_ofs_usr.set_y_ofs_usr(tmp as i8);
 
             let tmp = val.x_mg / 0.0078125;
-            x_ofs_usr.set_x_ofs_usr(tmp as u8);
+            x_ofs_usr.set_x_ofs_usr(tmp as i8);
         } else if val.x_mg < (0.125 * 127.0)
             && val.x_mg > (0.125 * -127.0)
             && val.y_mg < (0.125 * 127.0)
@@ -301,19 +305,19 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
             ctrl9.set_usr_off_w(1);
 
             let tmp = val.z_mg / 0.125;
-            z_ofs_usr.set_z_ofs_usr(tmp as u8);
+            z_ofs_usr.set_z_ofs_usr(tmp as i8);
 
             let tmp = val.y_mg / 0.125;
-            y_ofs_usr.set_y_ofs_usr(tmp as u8);
+            y_ofs_usr.set_y_ofs_usr(tmp as i8);
 
             let tmp = val.x_mg / 0.125;
-            x_ofs_usr.set_x_ofs_usr(tmp as u8);
+            x_ofs_usr.set_x_ofs_usr(tmp as i8);
         } else {
             // out of limit
             ctrl9.set_usr_off_w(1);
-            z_ofs_usr.set_z_ofs_usr(0xFF);
-            y_ofs_usr.set_y_ofs_usr(0xFF);
-            x_ofs_usr.set_x_ofs_usr(0xFF);
+            z_ofs_usr.set_z_ofs_usr(0xFFu8 as i8);
+            y_ofs_usr.set_y_ofs_usr(0xFFu8 as i8);
+            x_ofs_usr.set_x_ofs_usr(0xFFu8 as i8);
         }
 
         z_ofs_usr.write(self)?;
