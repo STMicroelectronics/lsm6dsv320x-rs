@@ -1943,9 +1943,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T, MainBank> {
     ///
     /// If returns 1 embedded functions are enabled
     pub async fn emb_func_conv_get(&mut self) -> Result<EmbFuncConv, Error<B::Error>> {
-        let conv_reg = self
-            .operate_over_embed(async |state| EmbFuncSensorConvEn::read(state).await)
-            .await?;
+        let conv_reg = self.operate_over_embed(EmbFuncSensorConvEn::read).await?;
 
         let val = EmbFuncConv {
             xl_hg_conv_en: conv_reg.xl_hg_conv_en(),
@@ -2353,9 +2351,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T, MainBank> {
 
     /// Get the acutal batching in FIFO buffer of step counter value.
     pub async fn fifo_stpcnt_batch_get(&mut self) -> Result<u8, Error<B::Error>> {
-        let emb_func_fifo_en_a = self
-            .operate_over_embed(async |state| EmbFuncFifoEnA::read(state).await)
-            .await?;
+        let emb_func_fifo_en_a = self.operate_over_embed(EmbFuncFifoEnA::read).await?;
 
         let val: u8 = emb_func_fifo_en_a.step_counter_fifo_en();
         Ok(val)
@@ -2477,9 +2473,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T, MainBank> {
 
     /// Get the actual configuration (enable/disable) for Batching in FIFO buffer of SFLP.
     pub async fn fifo_sflp_batch_get(&mut self) -> Result<FifoSflpRaw, Error<B::Error>> {
-        let emb_func_fifo_en_a = self
-            .operate_over_embed(async |state| EmbFuncFifoEnA::read(state).await)
-            .await?;
+        let emb_func_fifo_en_a = self.operate_over_embed(EmbFuncFifoEnA::read).await?;
 
         let val = FifoSflpRaw {
             game_rotation: emb_func_fifo_en_a.sflp_game_fifo_en(),
@@ -2904,9 +2898,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T, MainBank> {
 
     /// Get the enabled Finite State Machine (FSM) feature.
     pub async fn fsm_mode_get(&mut self) -> Result<FsmMode, Error<B::Error>> {
-        let fsm_enable = self
-            .operate_over_embed(async |state| FsmEnable::read(state).await)
-            .await?;
+        let fsm_enable = self.operate_over_embed(FsmEnable::read).await?;
 
         let val = FsmMode {
             fsm1_en: fsm_enable.fsm1_en(),
@@ -3182,9 +3174,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T, MainBank> {
 
     /// Get the configuration (enable/disable) for High-g accelerometer peak tracking enable.
     pub async fn xl_hg_peak_tracking_get(&mut self) -> Result<u8, Error<B::Error>> {
-        let emb_func_init_b = self
-            .operate_over_embed(async |state| EmbFuncInitB::read(state).await)
-            .await?;
+        let emb_func_init_b = self.operate_over_embed(EmbFuncInitB::read).await?;
         Ok(emb_func_init_b.pt_init())
     }
 
@@ -3346,9 +3336,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T, MainBank> {
 
     /// Get the Machine Learning Core Output Data Rate (ODR).
     pub async fn mlc_data_rate_get(&mut self) -> Result<MlcDataRate, Error<B::Error>> {
-        let mlc_odr = self
-            .operate_over_embed(async |state| MlcOdr::read(state).await)
-            .await?;
+        let mlc_odr = self.operate_over_embed(MlcOdr::read).await?;
 
         let val = MlcDataRate::try_from(mlc_odr.mlc_odr()).unwrap_or_default();
 
@@ -3683,9 +3671,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T, MainBank> {
 
     /// Get the number of external sensors to be read by the sensor hub.
     pub async fn sh_target_connected_get(&mut self) -> Result<ShTargetConnected, Error<B::Error>> {
-        let controller_config = self
-            .operate_over_sensor_hub(async |state| ControllerConfig::read(state).await)
-            .await?;
+        let controller_config = self.operate_over_sensor_hub(ControllerConfig::read).await?;
 
         let aux_sens_on =
             ShTargetConnected::try_from(controller_config.aux_sens_on()).unwrap_or_default();
@@ -3743,9 +3729,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T, MainBank> {
 
     /// Get the Sensor hub trigger signal configuration.
     pub async fn sh_syncro_mode_get(&mut self) -> Result<ShSyncroMode, Error<B::Error>> {
-        let controller_config = self
-            .operate_over_sensor_hub(async |state| ControllerConfig::read(state).await)
-            .await?;
+        let controller_config = self.operate_over_sensor_hub(ControllerConfig::read).await?;
 
         let val = ShSyncroMode::try_from(controller_config.start_config()).unwrap_or_default();
         Ok(val)
@@ -3767,9 +3751,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T, MainBank> {
     ///
     /// If enabled the write is performed only at the first sensor hub cycle.
     pub async fn sh_write_mode_get(&mut self) -> Result<ShWriteMode, Error<B::Error>> {
-        let controller_config = self
-            .operate_over_sensor_hub(async |state| ControllerConfig::read(state).await)
-            .await?;
+        let controller_config = self.operate_over_sensor_hub(ControllerConfig::read).await?;
 
         let mode = ShWriteMode::try_from(controller_config.write_once()).unwrap_or_default();
         Ok(mode)
@@ -4023,9 +4005,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T, MainBank> {
 
     /// Get step counter mode
     pub async fn stpcnt_mode_get(&mut self) -> Result<StpcntMode, Error<B::Error>> {
-        let emb_func_en_a = self
-            .operate_over_embed(async |state| EmbFuncEnA::read(state).await)
-            .await?;
+        let emb_func_en_a = self.operate_over_embed(EmbFuncEnA::read).await?;
 
         let pedo_cmd_reg = PedoCmdReg::read(self).await?;
 
