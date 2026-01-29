@@ -508,6 +508,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     ///
     /// Reset type choosen using `Reset` enum.
     #[deprecated(since = "2.0.0", note = "please use sw_reset")]
+    #[allow(deprecated)]
     pub fn reset_set(&mut self, val: Reset) -> Result<(), Error<B::Error>> {
         let mut func_cfg_access = FuncCfgAccess::read(self)?;
         let mut ctrl3 = Ctrl3::read(self)?;
@@ -521,6 +522,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     }
 
     #[deprecated(since = "2.0.0", note = "please use sw_reset")]
+    #[allow(deprecated)]
     pub fn reset_get(&mut self) -> Result<Reset, Error<B::Error>> {
         let ctrl3 = Ctrl3::read(self)?;
         let func_cfg_access = FuncCfgAccess::read(self)?;
@@ -538,9 +540,248 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
         WhoAmI::read(self).map(|whoami| whoami.id())
     }
 
+    /// Sensor xl setup
+    ///
+    /// Setup the accelerometer following the AN constrains.
+    /// If both accelerometer and gyroscope are ON and HAODR mode needs to
+    /// be changed, `haodr_set` must be used; otherwise, this function
+    /// will fail since HAODR is a shared bit.
+    pub fn xl_setup(&mut self, xl_odr: DataRate, xl_mode: XlMode) -> Result<(), Error<B::Error>> {
+        let xl_ha = ((xl_odr as u8) >> 4) & 0xF;
+
+        // Table 10 of AN6119
+        // 1.875 Hz allowed only in Low-power modes
+        if xl_odr == DataRate::_1_875hz
+            && xl_mode != XlMode::LowPower2Avg
+            && xl_mode != XlMode::LowPower4Avg
+            && xl_mode != XlMode::LowPower8Avg
+        {
+            return Err(Error::InvalidConfiguration);
+        }
+        // 7.5 Hz allowed only in normal or high-performance modes
+        else if xl_odr == DataRate::_7_5hz
+            && xl_mode != XlMode::Normal
+            && xl_mode != XlMode::HighPerformance
+        {
+            return Err(Error::InvalidConfiguration);
+        }
+        // if odr_xl bits has 4th bit enabled, low-power modes are not allowed
+        else if
+        // odr >= 480 and low-power and normal mode
+        (xl_odr as u8 & 0x8) != 0
+            && (xl_mode as u8 & 0x4) != 0
+            && (xl_mode != XlMode::Normal
+                || xl_odr == DataRate::_3840hz
+                || xl_odr == DataRate::_7680hz)
+        {
+            return Err(Error::InvalidConfiguration);
+        }
+        // Section 3.5 of AN6119
+        if xl_mode == XlMode::OdrTriggered
+            && (xl_odr == DataRate::_1_875hz
+                || xl_odr == DataRate::_7_5hz
+                || xl_odr == DataRate::_7680hz)
+        {
+            return Err(Error::InvalidConfiguration);
+        }
+
+        // if odr is choosed as High-accuracy value, mode should be set in HAODR mode
+        if (xl_ha != 0 && xl_mode != XlMode::HighAccuracyOdr)
+            || (xl_ha == 0 && xl_mode == XlMode::HighAccuracyOdr)
+        {
+            return Err(Error::InvalidConfiguration);
+        }
+
+        let mut ctrl1 = Ctrl1::read(self)?;
+        let ctrl2 = Ctrl2::read(self)?;
+        let mut haodr = HaodrCfg::read(self)?;
+
+        // cross-checking haodr mode
+        let both_on =
+            ctrl1.odr_xl() != (DataRate::Off as u8) && ctrl2.odr_g() != (DataRate::Off as u8);
+
+        // if both on, then haodr_sel is a shared bit. Could be changed through haodr_set API
+        if both_on && (xl_ha != haodr.haodr_sel()) {
+            return Err(Error::InvalidConfiguration);
+        }
+
+        // if odr is choosed as an High-accuracy value, mode should be set in High-accuracy
+        if xl_ha != 0 && xl_mode != XlMode::HighAccuracyOdr {
+            return Err(Error::InvalidConfiguration);
+        }
+
+        // Switching (enable/disable) HAODR mode require that all sensors must be in power-down
+        // mode.
+        if haodr.haodr_sel() != xl_ha &&
+            ctrl1.op_mode_xl() != (xl_mode as u8) && // check if mode switch is required
+            (xl_mode == XlMode::HighAccuracyOdr || // check if mode to set is HAODR
+             ctrl1.op_mode_xl() == (XlMode::HighAccuracyOdr as u8))
+        // check if previous mode was HAODR
+        {
+            let gy_mode = GyMode::try_from(ctrl2.op_mode_g()).unwrap_or_default();
+            let gy_odr = DataRate::try_from(ctrl2.odr_g()).unwrap_or_default();
+            self.haodr_set(xl_odr, xl_mode, gy_odr, gy_mode)?;
+        } else {
+            // if HAODR switch is not required, just set ctrl1 settings
+            ctrl1.set_op_mode_xl(xl_mode as u8);
+            ctrl1.set_odr_xl(xl_odr as u8);
+            haodr.set_haodr_sel(xl_ha);
+            ctrl1.write(self)?;
+            haodr.write(self)?;
+        }
+
+        Ok(())
+    }
+
+    /// Sensor gy setup
+    ///
+    /// If both accelerometer and gyroscope are ON and HAODR mode needs
+    /// to be changed, `swan3-5_haodr_set` must be used; otherwise,
+    /// this function will fail since HAODR is a shared bit.
+    pub fn gy_setup(&mut self, gy_odr: DataRate, gy_mode: GyMode) -> Result<(), Error<B::Error>> {
+        let gy_ha = ((gy_odr as u8) >> 4) & 0xF;
+
+        // Table 13 of AN6119
+        // 7.5Hz with HAODR mode enable, is already handled by the enum selection
+        if (gy_odr as u8) & 0x8 != 0 && gy_mode == GyMode::LowPower {
+            return Err(Error::InvalidConfiguration);
+        }
+
+        // Section 3.5 of AN6119
+        if gy_mode == GyMode::OdrTriggered
+            && (gy_odr == DataRate::_7_5hz || gy_odr == DataRate::_7680hz)
+        {
+            return Err(Error::InvalidConfiguration);
+        }
+
+        // if odr is choosed as High-accuracy value, mode should also be set in HAODR mode
+        if (gy_ha != 0 && gy_mode != GyMode::HighAccuracyOdr)
+            || (gy_ha == 0 && gy_mode == GyMode::HighAccuracyOdr)
+        {
+            return Err(Error::InvalidConfiguration);
+        }
+
+        let ctrl1 = Ctrl1::read(self)?;
+        let mut ctrl2 = Ctrl2::read(self)?;
+        let mut haodr = HaodrCfg::read(self)?;
+
+        // cross-checking haodr mode
+        let both_on =
+            ctrl1.odr_xl() != (DataRate::Off as u8) && ctrl2.odr_g() != (DataRate::Off as u8);
+
+        if both_on && (gy_ha != haodr.haodr_sel()) {
+            return Err(Error::InvalidConfiguration);
+        }
+
+        // Switching (enable/disable) HAODR mode require that all sensors must be in power-down
+        // mode.
+        if haodr.haodr_sel() != gy_ha &&
+            ctrl2.op_mode_g() != (gy_mode as u8) && // check if mode switch is required
+            (gy_mode == GyMode::HighAccuracyOdr || // check if mode to set is HAODR
+            ctrl2.op_mode_g() == (GyMode::HighAccuracyOdr as u8))
+        // check if previous mode was HAODR
+        {
+            let xl_odr = DataRate::try_from(ctrl1.odr_xl()).unwrap_or_default();
+            let xl_mode = XlMode::try_from(ctrl1.op_mode_xl()).unwrap_or_default();
+            self.haodr_set(xl_odr, xl_mode, gy_odr, gy_mode)?;
+        } else {
+            // if HAODR switch is not required, just set ctrl2 settings
+
+            ctrl2.set_op_mode_g(gy_mode as u8);
+            ctrl2.set_odr_g(gy_odr as u8);
+            haodr.set_haodr_sel(gy_ha);
+
+            ctrl2.write(self)?;
+            haodr.write(self)?;
+        }
+
+        Ok(())
+    }
+
+    /// HAODR set
+    ///
+    /// Allow changing the HAODR mode, which is a shared bit between the accelerometer
+    /// and gyroscope. This function must be used if both sensors are already ON and a
+    /// different HAODR mode is requested.
+    /// Both data rates should use the same HAODR configuration.
+    pub fn haodr_set(
+        &mut self,
+        xl_odr: DataRate,
+        xl_mode: XlMode,
+        gy_odr: DataRate,
+        gy_mode: GyMode,
+    ) -> Result<(), Error<B::Error>> {
+        let xl_ha = ((xl_odr as u8) >> 4) & 0xF;
+        let gy_ha = ((gy_odr as u8) >> 4) & 0xF;
+        let both_on = xl_odr != DataRate::Off && gy_odr != DataRate::Off;
+
+        if both_on && (xl_ha != gy_ha) {
+            return Err(Error::InvalidConfiguration);
+        }
+
+        let mut haodr = HaodrCfg::read(self)?;
+        let mut ctrl1 = Ctrl1::read(self)?;
+        let mut ctrl2 = Ctrl2::read(self)?;
+        let mut ctrl1_xl_hg = Ctrl1XlHg::read(self)?;
+        let mut ctrl_eis = CtrlEis::read(self)?;
+
+        let prev_mode = ctrl1.op_mode_xl();
+        let ctrl1_xl_hg_prev = ctrl1_xl_hg.clone();
+        let ctrl_eis_prev = ctrl_eis.clone();
+
+        // Enabling/disabling HAODR mode require to have all sensors in power-down mode
+        ctrl1.set_odr_xl(DataRate::Off as u8);
+        ctrl2.set_odr_g(DataRate::Off as u8);
+        ctrl1_xl_hg.set_odr_xl_hg(HgXlDataRate::Off as u8);
+        ctrl1_xl_hg.set_xl_hg_regout_en(0);
+        ctrl_eis.set_odr_g_eis(EisGyDataRate::OdrOff as u8);
+
+        ctrl1.write(self)?;
+        ctrl2.write(self)?;
+
+        // avoid turning off if already off
+        if ctrl1_xl_hg_prev.odr_xl_hg() != (HgXlDataRate::Off as u8) {
+            ctrl1_xl_hg.write(self)?;
+        }
+
+        if ctrl_eis_prev.odr_g_eis() != (EisGyDataRate::OdrOff as u8) {
+            ctrl_eis.write(self)?;
+        }
+
+        // set HAODR
+        haodr.set_haodr_sel(xl_ha | gy_ha);
+        ctrl1.set_op_mode_xl(xl_mode as u8);
+        ctrl2.set_op_mode_g(gy_mode as u8);
+
+        haodr.write(self)?;
+        ctrl1.write(self)?;
+        ctrl2.write(self)?;
+
+        if prev_mode == (XlMode::HighAccuracyOdr as u8) {
+            self.tim.delay_us(500); // should be at least 500 us; AN6119, section 3.4
+        }
+
+        // set xl and gy data rates and restore high-g xl and eis to their previous data rates
+
+        ctrl1.set_odr_xl(xl_odr as u8);
+        ctrl2.set_odr_g(gy_odr as u8);
+        ctrl1.write(self)?;
+        ctrl2.write(self)?;
+        // if off, there is no need to turn them on
+        if ctrl1_xl_hg_prev.odr_xl_hg() != (HgXlDataRate::Off as u8) {
+            ctrl1_xl_hg_prev.write(self)?;
+        }
+        if ctrl_eis_prev.odr_g_eis() != (EisGyDataRate::OdrOff as u8) {
+            ctrl_eis_prev.write(self)?;
+        }
+
+        Ok(())
+    }
+
     /// Set the accelerometer output data rate (ODR).
     ///
     /// When not set to Off it starts values reading.
+    #[deprecated(note = "please use xl_setup function")]
     pub fn xl_data_rate_set(&mut self, val: DataRate) -> Result<(), Error<B::Error>> {
         let mut ctrl1 = Ctrl1::read(self)?;
         ctrl1.set_odr_xl((val as u8) & 0x0F);
@@ -579,7 +820,27 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
         val: HgXlDataRate,
         reg_out_en: u8,
     ) -> Result<(), Error<B::Error>> {
+        let ctrl1 = Ctrl1::read(self)?;
+        let ctrl2 = Ctrl2::read(self)?;
         let mut ctrl1_xl_hg = Ctrl1XlHg::read(self)?;
+
+        if val != HgXlDataRate::Off
+            && ctrl1.odr_xl() != (DataRate::Off as u8)
+            && ctrl1.op_mode_xl() != (XlMode::HighPerformance as u8)
+            && ctrl1.op_mode_xl() != (XlMode::HighAccuracyOdr as u8)
+        {
+            return Err(Error::InvalidConfiguration);
+        }
+
+        // if xl or gy are ON in odr triggered mode, high-g xl cannot be turned on
+        if (ctrl1.odr_xl() != (DataRate::Off as u8)
+            && ctrl1.op_mode_xl() == (XlMode::OdrTriggered as u8))
+            || (ctrl2.odr_g() != (DataRate::Off as u8)
+                && ctrl2.op_mode_g() == (GyMode::OdrTriggered as u8))
+        {
+            return Err(Error::InvalidConfiguration);
+        }
+
         ctrl1_xl_hg.set_odr_xl_hg((val as u8) & 0x07);
         ctrl1_xl_hg.set_xl_hg_regout_en(reg_out_en & 0x01);
         ctrl1_xl_hg.write(self)
@@ -594,6 +855,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     }
 
     /// Accelerometer operating mode selection.
+    #[deprecated(note = "please use xl_setup function")]
     pub fn xl_mode_set(&mut self, val: XlMode) -> Result<(), Error<B::Error>> {
         let mut ctrl1 = Ctrl1::read(self)?;
         ctrl1.set_op_mode_xl((val as u8) & 0x07);
@@ -609,6 +871,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     }
 
     /// Set the gyroscope output data rate (ODR).
+    #[deprecated(note = "please use gy_setup function")]
     pub fn gy_data_rate_set(&mut self, val: DataRate) -> Result<(), Error<B::Error>> {
         let mut ctrl2 = Ctrl2::read(self)?;
         ctrl2.set_odr_g((val as u8) & 0x0F);
@@ -637,6 +900,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     }
 
     /// Set the gyroscope operating mode.
+    #[deprecated(note = "please use gy_setup function")]
     pub fn gy_mode_set(&mut self, val: GyMode) -> Result<(), Error<B::Error>> {
         let mut ctrl2 = Ctrl2::read(self)?;
         ctrl2.set_op_mode_g((val as u8) & 0x07);
@@ -1694,6 +1958,19 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
 
     /// Enables and selects the ODR of the gyroscope EIS channel.
     pub fn gy_eis_data_rate_set(&mut self, val: EisGyDataRate) -> Result<(), Error<B::Error>> {
+        let ctrl1 = Ctrl1::read(self)?;
+        let ctrl2 = Ctrl2::read(self)?;
+
+        // if xl or gy are ON in odr triggered mode, eis cannot be turned on
+        if val != EisGyDataRate::OdrOff
+            && (ctrl1.odr_xl() != (DataRate::Off as u8)
+                && ctrl1.op_mode_xl() == (XlMode::OdrTriggered as u8))
+            || (ctrl2.odr_g() != (DataRate::Off as u8)
+                && ctrl2.op_mode_g() == (GyMode::OdrTriggered as u8))
+        {
+            return Err(Error::InvalidConfiguration);
+        }
+
         let mut ctrl_eis = CtrlEis::read(self)?;
         ctrl_eis.set_odr_g_eis((val as u8) & 0x03);
         ctrl_eis.write(self)

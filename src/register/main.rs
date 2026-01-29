@@ -1916,7 +1916,7 @@ pub struct PinInt1Route {
     pub sleep_change: u8,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct PinInt2Route {
     pub drdy_xl: u8,
     pub drdy_g: u8,
@@ -1936,14 +1936,14 @@ pub struct PinInt2Route {
     pub emb_func_endop: u8,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, PartialEq)]
 pub struct PinIntRouteHg {
     pub drdy_hg_xl: u8,
     pub hg_wakeup: u8,
     pub hg_shock_change: u8,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, PartialEq)]
 pub struct PinIntRouteEmb {
     pub step_detector: u8,
     pub tilt: u8,
