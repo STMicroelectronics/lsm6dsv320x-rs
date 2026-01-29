@@ -750,8 +750,25 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     /// Set the Gyroscope full-scale.
     pub fn gy_full_scale_set(&mut self, val: GyFullScale) -> Result<(), Error<B::Error>> {
         let mut ctrl6 = Ctrl6::read(self)?;
+        let mut ctrl2 = Ctrl2::read(self)?;
+        let prev_ctrl2 = ctrl2.clone();
+
+        // For the correct operation of the device, the user must set a
+        // configuration from 001 to 101 when the gyroscope is in power-down mode.
+        if ctrl2.odr_g() != (DataRate::Off as u8) {
+            ctrl2.set_odr_g(DataRate::Off as u8);
+            ctrl2.write(self)?;
+        }
+
         ctrl6.set_fs_g((val as u8) & 0xf);
-        ctrl6.write(self)
+        ctrl6.write(self)?;
+
+        // restore previous odr set
+        if prev_ctrl2.odr_g() != (DataRate::Off as u8) {
+            prev_ctrl2.write(self)?
+        }
+
+        Ok(())
     }
 
     /// Get the actual Gyroscope full-scale.
@@ -1627,8 +1644,25 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     /// WARNING: 4000dps will be available only if also User Interface chain is set to 4000dps.
     pub fn eis_gy_full_scale_set(&mut self, val: EisGyFullScale) -> Result<(), Error<B::Error>> {
         let mut ctrl_eis = CtrlEis::read(self)?;
+        let mut ctrl2 = Ctrl2::read(self)?;
+        let prev_ctrl2 = ctrl2.clone();
+
+        // For the correct operation of the device, the user must set a
+        // configuration from 001 to 101 when the gyroscope is in power-down mode.
+        if ctrl2.odr_g() != (DataRate::Off as u8) {
+            ctrl2.set_odr_g(DataRate::Off as u8);
+            ctrl2.write(self)?;
+        }
+
         ctrl_eis.set_fs_g_eis((val as u8) & 0x7);
-        ctrl_eis.write(self)
+        ctrl_eis.write(self)?;
+
+        // restore previous odr set
+        if prev_ctrl2.odr_g() != (DataRate::Off as u8) {
+            prev_ctrl2.write(self)?
+        }
+
+        Ok(())
     }
 
     /// Get the actual Gyroscope full-scale selection for EIS channel.
