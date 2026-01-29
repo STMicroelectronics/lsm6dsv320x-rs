@@ -566,14 +566,16 @@ pub enum ShWriteMode {
 #[derive(Clone, Copy, PartialEq, Default, TryFrom)]
 #[try_from(repr)]
 pub enum ShDataRate {
+    /// 1.875 Hz data rate.
+    _1_875hz = 0x0,
     /// 15 Hz data rate.
-    #[default]
     _15hz = 0x1,
     /// 30 Hz data rate.
     _30hz = 0x2,
     /// 60 Hz data rate.
     _60hz = 0x3,
     /// 120 Hz data rate.
+    #[default]
     _120hz = 0x4,
     /// 240 Hz data rate.
     _240hz = 0x5,
