@@ -1416,30 +1416,30 @@ pub struct FreeFall {
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Md1Cfg {
-    /// Routing activity/inactivity recognition event to INT1
-    #[bits(1)]
-    pub int1_sleep_change: u8,
-    /// Routing single-tap recognition event to INT1
-    #[bits(1)]
-    pub int1_single_tap: u8,
-    /// Routing wake-up event to INT1
-    #[bits(1)]
-    pub int1_wu: u8,
-    /// Routing free-fall event to INT1
-    #[bits(1)]
-    pub int1_ff: u8,
-    /// Routing double-tap event to INT1
-    #[bits(1)]
-    pub int1_double_tap: u8,
-    /// Routing 6D event to INT1
-    #[bits(1)]
-    pub int1_6d: u8,
-    /// Routing embedded functions event to INT1
-    #[bits(1)]
-    pub int1_emb_func: u8,
     /// Routing sensor hub communication concluded event to INT1
     #[bits(1)]
     pub int1_shub: u8,
+    /// Routing embedded functions event to INT1
+    #[bits(1)]
+    pub int1_emb_func: u8,
+    /// Routing 6D event to INT1
+    #[bits(1)]
+    pub int1_6d: u8,
+    /// Routing double-tap event to INT1
+    #[bits(1)]
+    pub int1_double_tap: u8,
+    /// Routing free-fall event to INT1
+    #[bits(1)]
+    pub int1_ff: u8,
+    /// Routing wake-up event to INT1
+    #[bits(1)]
+    pub int1_wu: u8,
+    /// Routing single-tap recognition event to INT1
+    #[bits(1)]
+    pub int1_single_tap: u8,
+    /// Routing activity/inactivity recognition event to INT1
+    #[bits(1)]
+    pub int1_sleep_change: u8,
 }
 
 /// MD2_CFG (0x5F)
@@ -1449,30 +1449,30 @@ pub struct Md1Cfg {
 #[cfg_attr(feature = "bit_order_msb", bitfield(u8, order = Msb))]
 #[cfg_attr(not(feature = "bit_order_msb"), bitfield(u8, order = Lsb))]
 pub struct Md2Cfg {
-    /// Routing activity/inactivity recognition event to INT2
-    #[bits(1)]
-    pub int2_sleep_change: u8,
-    /// Routing single-tap recognition event to INT2
-    #[bits(1)]
-    pub int2_single_tap: u8,
-    /// Routing wake-up event to INT2
-    #[bits(1)]
-    pub int2_wu: u8,
-    /// Routing free-fall event to INT2
-    #[bits(1)]
-    pub int2_ff: u8,
-    /// Routing double-tap event to INT2
-    #[bits(1)]
-    pub int2_double_tap: u8,
-    /// Routing 6D event to INT2
-    #[bits(1)]
-    pub int2_6d: u8,
-    /// Routing embedded functions event to INT2
-    #[bits(1)]
-    pub int2_emb_func: u8,
     /// Routing timestamp overflow alert to INT2
     #[bits(1)]
     pub int2_timestamp: u8,
+    /// Routing embedded functions event to INT2
+    #[bits(1)]
+    pub int2_emb_func: u8,
+    /// Routing 6D event to INT2
+    #[bits(1)]
+    pub int2_6d: u8,
+    /// Routing double-tap event to INT2
+    #[bits(1)]
+    pub int2_double_tap: u8,
+    /// Routing free-fall event to INT2
+    #[bits(1)]
+    pub int2_ff: u8,
+    /// Routing wake-up event to INT2
+    #[bits(1)]
+    pub int2_wu: u8,
+    /// Routing single-tap recognition event to INT2
+    #[bits(1)]
+    pub int2_single_tap: u8,
+    /// Routing activity/inactivity recognition event to INT2
+    #[bits(1)]
+    pub int2_sleep_change: u8,
 }
 
 /// HAODR_CFG (0x62)
