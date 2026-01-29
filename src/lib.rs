@@ -3087,7 +3087,7 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     /// Set gyroscope OIS full-scale
     pub fn ois_gy_full_scale_set(&mut self, val: OisGyFullScale) -> Result<(), Error<B::Error>> {
         let mut ui_ctrl2_ois = UiCtrl2Ois::read(self)?;
-        ui_ctrl2_ois.set_fs_g_ois(val as u8 & 0x03);
+        ui_ctrl2_ois.set_fs_g_ois(val as u8 & 0x07);
         ui_ctrl2_ois.write(self)
     }
 
