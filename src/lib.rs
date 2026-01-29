@@ -3415,9 +3415,9 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
     }
 
     /// Enables/Disables I2C and I3C on UI (User Interface).
-    pub fn ui_i2c_i3c_mode_set(&mut self, val: u8) -> Result<(), Error<B::Error>> {
+    pub fn ui_i2c_i3c_mode_set(&mut self, val: UiI2cI3cMode) -> Result<(), Error<B::Error>> {
         let mut if_cfg = IfCfg::read(self)?;
-        if_cfg.set_i2c_i3c_disable(val & 0x1);
+        if_cfg.set_i2c_i3c_disable(val as u8 & 0x1);
         if_cfg.write(self)
     }
 
