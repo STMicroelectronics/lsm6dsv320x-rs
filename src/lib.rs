@@ -1469,6 +1469,17 @@ impl<B: BusOperation, T: DelayNs> Lsm6dsv320x<B, T> {
         })
     }
 
+    // Reset SFLP Game Rotation Vector Logic (6x).
+    //
+    // If val set to 1: SFLP game algorithm initialization request
+    pub fn sflp_game_rotation_reset(&mut self, val: u8) -> Result<(), Error<B::Error>> {
+        MemBank::operate_over_embed(self, |lock| {
+            let mut emb_func_init_a = EmbFuncInitA::read(lock)?;
+            emb_func_init_a.set_sflp_game_init(val);
+            emb_func_init_a.write(lock)
+        })
+    }
+
     /// Get the SFLP quaternions array.
     ///
     /// After the conversion bit to float.
