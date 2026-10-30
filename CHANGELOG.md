@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 
 
 ### Bug Fixes
--  Replace bisync with bisync2 (v0.3.2)
+-  Replace bisync with bisync2 (v0.3.2) by @avisconti
 
 
 
@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 
 
 ### Miscellaneous Tasks
+- (*release*)  Prepare v2.1.0 by @avisconti
 -  Update README with instructions for running examples by @Gioelio
 
 
